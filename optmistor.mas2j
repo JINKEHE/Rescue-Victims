@@ -1,0 +1,13 @@
+MAS optmistor {
+
+	infrastructure: Centralised
+
+	environment: PlaygroundEnv
+
+	agents:
+		doctor;
+		scout;
+
+	aslSourcePath:
+		"src/asl";
+}
