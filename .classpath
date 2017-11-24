@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry excluding="*.asl" kind="src" path="src/asl" />
-	<classpathentry kind="src" path="src/java" />
+	<classpathentry excluding="*.asl" kind="src" path="src/asl"/>
+	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="lib" path="C:\Jason\libs\jason-2.2.jar"/>
-<classpathentry kind="output" path="bin/classes"/></classpath>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/ant-1.9.7.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/ant-launcher-1.9.7.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/BufferTabs.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/cartago-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/ErrorList.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/jaca-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/jade-4.3.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/jason-2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/jedit.jar"/>
+	<classpathentry kind="lib" path="/Users/shoujiafeng/Desktop/jason-2.2/libs/SideKick.jar"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
