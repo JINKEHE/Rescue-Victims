@@ -2,13 +2,11 @@
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Dialog.ModalExclusionType;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.logging.Logger;
 
-import javax.sql.rowset.CachedRowSet;
 
 import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
@@ -16,21 +14,16 @@ import jason.environment.Environment;
 import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.GridWorldView;
 import jason.environment.grid.Location;
-import jason.functions.Random;
-import jason.stdlib.random;
+
 
 // the centralised environment
 public class Env extends Environment {
 
-	public static final Literal leftOccupied = Literal.parseLiteral("occupied(left)");
-	public static final Literal rightOccupied = Literal.parseLiteral("occupied(right)");
-	public static final Literal upOccupied = Literal.parseLiteral("occupied(up)");
-	public static final Literal downOccupied = Literal.parseLiteral("occupied(down)");
-	public static final Literal locDetermined = Literal.parseLiteral("determined(loc)");
-	public static final Literal goUp = Literal.parseLiteral("move(up)");
-	public static final Literal goLeft = Literal.parseLiteral("move(left)");
-	public static final Literal goRight = Literal.parseLiteral("move(right)");
-	public static final Literal goDown = Literal.parseLiteral("move(down)");
+	public static final Literal OCCUPIED_DOWN = Literal.parseLiteral("occupied(down)");
+	public static final Literal OCCUPIED_RIGHT = Literal.parseLiteral("occupied(right)");
+	public static final Literal OCCUPIED_LEFT = Literal.parseLiteral("occupied(left)");
+	public static final Literal OCCUPIED_UP = Literal.parseLiteral("occupied(up)");
+	public static final String MOVE = "move";
 	
     private Logger logger = Logger.getLogger("optmistor."+ Env.class.getName());
 
@@ -52,11 +45,10 @@ public class Env extends Environment {
     
     private static final int DELAY = 500;
     
-    private static final int DOWN = 0;
-    private static final int RIGHT = 1;
-    private static final int LEFT = 2;
-    private static final int UP = 3;
-    
+    private static final String DOWN = "down";
+    private static final String RIGHT = "right";
+    private static final String LEFT = "left";
+    private static final String UP = "up";
     
     
     private Model model;
@@ -90,14 +82,8 @@ public class Env extends Environment {
         		model.scoutGoNext();
             } else if (action.equals(getPercepts)) {
             	model.getPercepts();
-            } else if (action.equals(goUp)) {
-            	model.move(UP);
-            } else if (action.equals(goDown)) {
-            	model.move(DOWN);
-            } else if (action.equals(goLeft)) {
-            	model.move(LEFT);
-            } else if (action.equals(goRight)) {
-            	model.move(RIGHT);
+            } else if (action.getFunctor().equals(MOVE)){
+            	model.move(action.getTerm(0).toString());
             } else if (action.toString().equals("turn(90)")) {
             	logger.info("previous: " + model.heading);
             	switch(model.heading) {
@@ -256,7 +242,7 @@ public class Env extends Environment {
         
         
         // 0 - down, 1 - right, 2 - left, 3 - up
-        void move(int direction) {
+        void move(String direction) {
         	Location scoutLoc = getAgPos(0);
             switch (direction) {
 			case DOWN:
@@ -276,8 +262,28 @@ public class Env extends Environment {
 				heading = "up";
 				break;
 			}
+            if (new java.util.Random().nextFloat() > 0.5) {
+            	strangeTurn();
+            }
             setAgPos(0, scoutLoc);
             updatePercepts();
+        }
+        
+        void strangeTurn() {
+        	switch(heading) {
+        	case "down":
+        		heading = "left";
+        		break;
+        	case "up":
+        		heading = "right";
+        		break;
+        	case "left":
+        		heading = "up";
+        		break;
+        	case "right":
+        		heading = "down";
+        		break;
+        	}
         }
         
         void rotateTo(int newHeading) {
@@ -309,19 +315,19 @@ public class Env extends Environment {
         void getPercepts() {
         	if (simulation.isDownOccupied()) {
         		logger.info("Down occpuied");
-        		addPercept(downOccupied);
+        		addPercept(OCCUPIED_DOWN);
         	}
         	if (simulation.isLeftOccupied()){
         		logger.info("left occpuied");
-        		addPercept(leftOccupied);
+        		addPercept(OCCUPIED_LEFT);
         	}
         	if (simulation.isRightOccupied()){
         		logger.info("right occpuied");
-        		addPercept(rightOccupied);
+        		addPercept(OCCUPIED_RIGHT);
         	}
         	if (simulation.isUpOccupied()){
         		logger.info("Up occpuied");
-        		addPercept(upOccupied);
+        		addPercept(OCCUPIED_UP);
         	}
         }
         
