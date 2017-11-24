@@ -1,10 +1,13 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.function.IntPredicate;
 
 import jason.environment.grid.Location;
+import jason.stdlib.intend;
 
 // a grid map
 public class Model {
@@ -17,14 +20,18 @@ public class Model {
 	// costs from one victim to another victim
 	private HashMap<Location, HashMap<Location, Integer>> costToEachOther;
 	private HashMap<Location, HashMap<Location, LinkedList<Location>>> pathToEachOther;
+
 	// constructor 1 with width and height
 	public Model(int W_GRID, int H_GRID) {
 		width = W_GRID;
 		height = H_GRID;
 		obstacles = new HashSet<Location>();
 	}
-	// constructor 2 with width, height, set of obstacles and whether there are walls
-	public Model(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
+
+	// constructor 2 with width, height, set of obstacles and whether there are
+	// walls
+	public Model(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims,
+			boolean addWalls) {
 		width = W_GRID;
 		height = H_GRID;
 		obstacles = setOfObstacles;
@@ -33,35 +40,37 @@ public class Model {
 		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
 		computeCosts();
 		if (addWalls) {
-			for (int w=0; w <= width-1; w++) {
-				obstacles.add(new Location(w,0));
-				obstacles.add(new Location(w,height-1));
+			for (int w = 0; w <= width - 1; w++) {
+				obstacles.add(new Location(w, 0));
+				obstacles.add(new Location(w, height - 1));
 			}
-			for (int h=0; h <= height-1; h++) {
-				obstacles.add(new Location(0,h));
-				obstacles.add(new Location(width-1,h));
+			for (int h = 0; h <= height - 1; h++) {
+				obstacles.add(new Location(0, h));
+				obstacles.add(new Location(width - 1, h));
 			}
 		}
 	}
-	
+
 	// compute the cost it will take to get from one victim to another
 	public void computeCosts() {
-		for (Location vicOne: victimsToVisit) {
+		for (Location vicOne : victimsToVisit) {
 			pathToEachOther.put(vicOne, new HashMap<Location, LinkedList<Location>>());
 			costToEachOther.put(vicOne, new HashMap<Location, Integer>());
-			for (Location vicTwo: victimsToVisit) {
-				// can be easily further optimized, but I am lazy, hopefully someone will do this
+			for (Location vicTwo : victimsToVisit) {
+				// can be easily further optimized, but I am lazy, hopefully
+				// someone will do this
 				if (vicOne != vicTwo) {
 					LinkedList<Location> path = aStarPathFinding(vicOne, vicTwo);
 					pathToEachOther.get(vicOne).put(vicTwo, path);
 					costToEachOther.get(vicOne).put(vicTwo, path.size());
-					System.out.print("[Location (" + vicOne.toString() + ") to (" + vicTwo.toString() + ")] step: " + costToEachOther.get(vicOne).get(vicTwo) + ", path: ");
+					System.out.print("[Location (" + vicOne.toString() + ") to (" + vicTwo.toString() + ")] step: "
+							+ costToEachOther.get(vicOne).get(vicTwo) + ", path: ");
 					printPath(pathToEachOther.get(vicOne).get(vicTwo));
 				}
 			}
 		}
 	}
-	
+
 	// A* path finding algorithm with Location as the basic element
 	public LinkedList<Location> aStarPathFinding(Location start, Location goal) {
 		// initialize the data structures to be used in the search
@@ -77,8 +86,9 @@ public class Model {
 		while (!(found || openList.isEmpty())) {
 			// find the optimal grid with smallest f(n) = g(n) + h(n)
 			Location besGrid = openList.get(0);
-			for (Location grid: openList){
-				if (values.get(grid) + grid.distanceManhattan(goal) < values.get(besGrid) + besGrid.distanceManhattan(goal)){
+			for (Location grid : openList) {
+				if (values.get(grid) + grid.distanceManhattan(goal) < values.get(besGrid)
+						+ besGrid.distanceManhattan(goal)) {
 					besGrid = grid;
 				}
 			}
@@ -86,18 +96,19 @@ public class Model {
 			openList.remove(besGrid);
 			closedList.add(besGrid);
 			Location nextGrid;
-			for (int[] g: new int[][]{{-1,0}, {0,-1}, {0,1}, {1,0}}){
+			for (int[] g : new int[][] { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } }) {
 				int x = besGrid.x + g[0];
 				int y = besGrid.y + g[1];
 				nextGrid = new Location(x, y);
-				if (y<=height-1 && x<=width-1 && y>=0 && x>=0 && !closedList.contains(nextGrid) && !values.containsKey(nextGrid) && !obstacles.contains(nextGrid)) {
+				if (y <= height - 1 && x <= width - 1 && y >= 0 && x >= 0 && !closedList.contains(nextGrid)
+						&& !values.containsKey(nextGrid) && !obstacles.contains(nextGrid)) {
 					parents.put(nextGrid, besGrid);
 					if (goal.equals(nextGrid)) {
 						found = true;
 						break;
 					} else {
 						openList.addFirst(nextGrid);
-						values.put(nextGrid, 1+values.get(besGrid));
+						values.put(nextGrid, 1 + values.get(besGrid));
 					}
 				}
 			}
@@ -112,17 +123,15 @@ public class Model {
 		}
 		return path;
 	}
-	
-	
-	
+
 	// draw the map (for debugging purpose)
 	public void visualize() {
 		String str = "";
-		for (int h=0; h<=height-1;h++){
-			for (int w=0; w<=width-1; w++){
-				if (obstacles.contains(new Location(w,h))){
+		for (int h = 0; h <= height - 1; h++) {
+			for (int w = 0; w <= width - 1; w++) {
+				if (obstacles.contains(new Location(w, h))) {
 					str += "1";
-				} else if (victimsToVisit.contains(new Location(w,h))){
+				} else if (victimsToVisit.contains(new Location(w, h))) {
 					str += "?";
 				} else {
 					str += "0";
@@ -133,36 +142,98 @@ public class Model {
 		}
 		System.out.println(str);
 	}
-	
+
 	// print the path generated by A* search algorithm (for debugging purpose)
 	// a static method
-	public void printPath(LinkedList<Location> path){
-		for(int i=0; i<=path.size()-1; i++){
-			System.out.print("("+path.get(i).toString()+")");
-			if (i != path.size()-1) System.out.print("->");
+	public void printPath(LinkedList<Location> path) {
+		for (int i = 0; i <= path.size() - 1; i++) {
+			System.out.print("(" + path.get(i).toString() + ")");
+			if (i != path.size() - 1)
+				System.out.print("->");
 		}
 		System.out.println();
 	}
-	
-	public void generateBestPathToVisitVictims() {
-		// if there's no unvisited victims, return immediately
-		if (victimsToVisit.size() == 0) {
-			return;
+
+	// that's hard to explain.
+	// hopefully, someone will add more comments here (or not?)
+	public Location[] findOrderOfVictimsToVisit(Location currentLoc) { 
+	// if there's no unvisited victims, return immediately 
+		ArrayList<Location[]> permutations = getPermutations(0, (Location[]) victimsToVisit.toArray());
+		HashMap<Location, Integer> costToFirstVic = new HashMap<Location, Integer>();
+		for (Location victim : victimsToVisit) {
+			LinkedList<Location> path = aStarPathFinding(currentLoc, victim);
+			costToFirstVic.put(victim, path.size());
 		}
-		
-		for (Location vicOne: victimsToVisit) {
-			for (Location vicTwo: victimsToVisit) {
-				
+		// find the optimal order of victims to visit 
+		Location[] bestOrder = permutations.get(0);
+		int miniTotalCost = computeTotalCost(bestOrder) + costToFirstVic.get(bestOrder[0]);
+		for (Location[] order : permutations) {
+			if (computeTotalCost(order)+costToFirstVic.get(order[0])<miniTotalCost){
+				miniTotalCost = computeTotalCost(order)+costToFirstVic.get(order[0]);
+				bestOrder = order;
 			}
 		}
+		// return the order of victims to visit
+		return bestOrder;
+		// don't worry about the plans, they are already generated and stored
+	}
+
+	// compute the cose for each possible order of victims to visit 
+	public int computeTotalCost(Location[] orderOfVictims) {
+		int totalCost = 0;
+		for (int i=1; i<=orderOfVictims.length-1; i++) {
+			totalCost += costToEachOther.get(orderOfVictims[i-1]).get(orderOfVictims[i]);
+		}
+		return totalCost;
+	}
+	
+	// a recursive method to get all the permutations of a set of numbers
+	// I love this generic method
+	public static <T> ArrayList<T[]> getPermutations(int start, T[] input) {
+		ArrayList<T[]> output = new ArrayList<T[]>();
+		if (start == input.length) {
+			output.add(input.clone());
+		}
+		for (int i = start; i < input.length; i++) {
+			// swap the current number with later numbers
+			T temp = input[i];
+			input[i] = input[start];
+			input[start] = temp;
+			// then recursively call the permute method
+			output.addAll(getPermutations(start+1, input));
+			// swap back
+			temp = input[i];
+			input[i] = input[start];
+			input[start] = temp;
+		}
+		return output;
+	}
+
+	// why do I have this method?
+	public static String integerArrayToStr(Integer[] arr) {
+		String str = "[";
+		for (int i=0; i<=arr.length-1; i++) {
+			str += arr[i];
+			if (i != arr.length-1) str += ", ";
+		}
+		str += "]";
+		return str;
 	}
 	
 	public static void main(String[] args) {
-		Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3)};
-		Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6)};
-		Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles));
-		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims));
-		Model model = new Model(9, 8, obstaclesSet, possibleVictimsSet, true);
-		model.visualize();
+		/*
+		 * Location[] obstacles = new Location[]{new Location(2,1),new
+		 * Location(2,3)}; Location[] possibleVictims = new Location[]{new
+		 * Location(2,2),new Location(5,6)}; Set<Location> obstaclesSet = new
+		 * HashSet<Location>(Arrays.asList(obstacles)); Set<Location>
+		 * possibleVictimsSet = new
+		 * HashSet<Location>(Arrays.asList(possibleVictims)); Model model = new
+		 * Model(9, 8, obstaclesSet, possibleVictimsSet, true);
+		 * model.visualize();
+		 */
+		ArrayList<Integer[]> result = getPermutations(0, new Integer[]{0,1,2,3});
+		for (Integer[] one : result) {
+			System.out.println(integerArrayToStr(one));
+		}
 	}
 }
