@@ -158,7 +158,7 @@ public class Model {
 	// hopefully, someone will add more comments here (or not?)
 	public Location[] findOrderOfVictimsToVisit(Location currentLoc) { 
 	// if there's no unvisited victims, return immediately 
-		ArrayList<Location[]> permutations = getPermutations(0, (Location[]) victimsToVisit.toArray());
+		ArrayList<Location[]> permutations = getPermutations(0, victimsToVisit.toArray(new Location[victimsToVisit.size()]));
 		HashMap<Location, Integer> costToFirstVic = new HashMap<Location, Integer>();
 		for (Location victim : victimsToVisit) {
 			LinkedList<Location> path = aStarPathFinding(currentLoc, victim);
@@ -220,20 +220,25 @@ public class Model {
 		return str;
 	}
 	
-	public static void main(String[] args) {
-		/*
-		 * Location[] obstacles = new Location[]{new Location(2,1),new
-		 * Location(2,3)}; Location[] possibleVictims = new Location[]{new
-		 * Location(2,2),new Location(5,6)}; Set<Location> obstaclesSet = new
-		 * HashSet<Location>(Arrays.asList(obstacles)); Set<Location>
-		 * possibleVictimsSet = new
-		 * HashSet<Location>(Arrays.asList(possibleVictims)); Model model = new
-		 * Model(9, 8, obstaclesSet, possibleVictimsSet, true);
-		 * model.visualize();
-		 */
-		ArrayList<Integer[]> result = getPermutations(0, new Integer[]{0,1,2,3});
-		for (Integer[] one : result) {
-			System.out.println(integerArrayToStr(one));
+	public static String locArrayToStr(Location[] arr) {
+		String str = "[";
+		for (int i=0; i<=arr.length-1; i++) {
+			str += "("+arr[i].toString()+")";
+			if (i != arr.length-1) str += ", ";
 		}
+		str += "]";
+		return str;
+	}
+	
+	public static void main(String[] args) {
+		Location[] obstacles = new Location[]{new Location(2,1),new
+		Location(2,3)}; Location[] possibleVictims = new Location[]{new
+		Location(2,2),new Location(5,6)}; Set<Location> obstaclesSet = new
+		HashSet<Location>(Arrays.asList(obstacles)); Set<Location>
+		possibleVictimsSet = new
+		HashSet<Location>(Arrays.asList(possibleVictims)); Model model = new
+		Model(9, 8, obstaclesSet, possibleVictimsSet, true);
+		model.visualize(); 
+		System.out.print(locArrayToStr(model.findOrderOfVictimsToVisit(new Location(4,6))));
 	}
 }
