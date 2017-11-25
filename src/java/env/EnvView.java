@@ -15,7 +15,7 @@ import jason.environment.grid.GridWorldView;
 	    private static final int POTENTIAL_VICTIM = 32;
 	    private static final int VICTIM = 64;
 
-	    private static final Color SCOUT_COLOR = Color.GREEN;
+	    //private static final Color SCOUT_COLOR = Color.GREEN;
 	    private static final Color FONT_COLOR = Color.BLACK;
 	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
 	    private static final Color VICTIM_COLOR = Color.RED;
@@ -64,6 +64,7 @@ import jason.environment.grid.GridWorldView;
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
 			g.setColor(POSSIBILE_SCOUNT_COLOR);
 			// System.out.println("1");
+			System.out.println(envModel.possiblePosition.size());
 			for (Position pos : envModel.possiblePosition) {
 				int possible_x = pos.getX();
 				int possible_y = pos.getY();
@@ -92,9 +93,9 @@ import jason.environment.grid.GridWorldView;
 							(int) ((0.5 + possible_y) * cellSizeH) };
 					Polygon triangle = new Polygon(xPoint, yPoint, 3);
 					g.fillPolygon(triangle);
-				} else
+				} else {
 					return;
-	
+				}
 			}
 			int xPoint[] = { x * cellSizeW, (x + 1) * cellSizeW, (int) ((0.5 + x) * cellSizeW) };
 			int yPoint[] = { y * cellSizeH, y * cellSizeH, (y + 1) * cellSizeH };

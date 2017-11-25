@@ -89,6 +89,7 @@ public class EnvController extends Environment {
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
             } else if (action.equals(allPos)) {
+            	logger.info("exec");
             	addAllPosition();
             } else if (action.getFunctor().equals(MOVE)){
             	move(action.getTerm(0).toString());
@@ -117,7 +118,8 @@ public class EnvController extends Environment {
 	void addAllPosition(){
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
-				if(!envModel.hasObject(OBSTACLE, x,y)&&!envModel.hasObject(WALL, x,y)) {
+				if(!envModel.hasObject(OBSTACLE,x,y)&&!envModel.hasObject(WALL,x,y)) {
+					logger.info("ff");
 					envModel.possiblePosition.add(new Position(x,y,UP));
 					envModel.possiblePosition.add(new Position(x,y,DOWN));
 					envModel.possiblePosition.add(new Position(x,y,LEFT));
