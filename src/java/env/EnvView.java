@@ -3,7 +3,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 
-import jason.asSyntax.Literal;
 import jason.environment.grid.GridWorldView;
 
 // the view of the environment
@@ -20,13 +19,13 @@ import jason.environment.grid.GridWorldView;
 	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
 	    private static final Color VICTIM_COLOR = Color.RED;
 	    
-	    private EnvController controller;
+	    //private EnvController controller;
 	    private EnvModel envModel;
 	    
 		public EnvView(EnvModel model, EnvController controller) {
             super(model, "Children's Playground", 600);
             envModel = model;
-            this.controller = controller;
+            //this.controller = controller;
             defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
             setVisible(true);
             repaint();

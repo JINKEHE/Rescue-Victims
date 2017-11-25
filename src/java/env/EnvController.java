@@ -25,6 +25,11 @@ public class EnvController extends Environment {
 	public static final Literal OCCUPIED_UP = Literal.parseLiteral("occupied(up)");
 	public static final String MOVE = "move";
 	
+	public static final String RED = "red";
+	public static final String BLUE = "blue";
+	public static final String WHITE = "white";
+	public static final String GREEN = "green";
+	
     private Logger logger = Logger.getLogger("optmistor."+ EnvController.class.getName());
 
     public static final int GARB  = 16;
@@ -98,7 +103,9 @@ public class EnvController extends Environment {
     	clearPercepts();
     	Literal scoutPos = envModel.getPos();
     	addPercept(scoutPos);
+    	
     }
+    
     
     void scoutGoNext() {
         Location scoutLoc = envModel.getAgPos(0);
@@ -135,26 +142,31 @@ public class EnvController extends Environment {
         updatePercepts();
     }
     
+    // we are going to modify this part to connect to the robot
     void getEnvInfo() {
     	if (simulation.isDownOccupied()) {
-    		logger.info("Down occpuied");
+    		//logger.info("Down occpuied");
     		addPercept(OCCUPIED_DOWN);
     	}
     	if (simulation.isLeftOccupied()){
-    		logger.info("left occpuied");
+    		//logger.info("left occpuied");
     		addPercept(OCCUPIED_LEFT);
     	}
     	if (simulation.isRightOccupied()){
-    		logger.info("right occpuied");
+    		//logger.info("right occpuied");
     		addPercept(OCCUPIED_RIGHT);
     	}
     	if (simulation.isUpOccupied()){
-    		logger.info("Up occpuied");
+    		//logger.info("Up occpuied");
     		addPercept(OCCUPIED_UP);
     	}
+    	String color = simulation.getGridColor();
+    	logger.info("the color is " + color);
+    	addPercept("color("+color+")");
     }
     
-    
+    // belief: color()
+    // colors are red = critical, blue, green
     
     
     // this class was totally designed for testing before applying to real robots
@@ -214,6 +226,18 @@ public class EnvController extends Environment {
     		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
     	}
     	
+    	public String getGridColor() {
+    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
+    		if (scoutLoc.equals(realVictims[0])) {
+    			return RED;
+    		} else if (scoutLoc.equals(realVictims[1])) {
+    			return BLUE;
+    		} else if (scoutLoc.equals(realVictims[2])){
+    			return GREEN;
+    		} else {
+    			return WHITE;
+    		}
+    	}
     }
 }
 
