@@ -11,7 +11,6 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.environment.Environment;
 import jason.environment.grid.Location;
-import jason.functions.log;
 
 
 // the centralised environment
@@ -25,6 +24,11 @@ public class EnvController extends Environment {
 	public static final Literal OCCUPIED_LEFT = Literal.parseLiteral("occupied(left)");
 	public static final Literal OCCUPIED_UP = Literal.parseLiteral("occupied(up)");
 	public static final String MOVE = "move";
+	
+	public static final String RED = "red";
+	public static final String BLUE = "blue";
+	public static final String WHITE = "white";
+	public static final String GREEN = "green";
 	
     private Logger logger = Logger.getLogger("optmistor."+ EnvController.class.getName());
 
@@ -48,7 +52,7 @@ public class EnvController extends Environment {
     private EnvView envView;
     private Simulation simulation;
     
-    public HashSet<Position> possiblePosition = new HashSet<Position>();
+
     
     public static final Literal goScout = Literal.parseLiteral("go(next)");
     public static final Literal getEnvInfo = Literal.parseLiteral("get(info)");
@@ -94,7 +98,6 @@ public class EnvController extends Environment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    		logger.info(this.possiblePosition.size()+"");
         return true;
     }
 
@@ -112,13 +115,13 @@ public class EnvController extends Environment {
     }
     
 	void addAllPosition(){
-		for(int x=0;x<this.W_GRID;x++) {
-			for(int y=0;y<this.H_GRID;y++) {
+		for(int x=0;x<W_GRID;x++) {
+			for(int y=0;y<H_GRID;y++) {
 				if(!envModel.hasObject(OBSTACLE, x,y)&&!envModel.hasObject(WALL, x,y)) {
-					this.possiblePosition.add(new Position(x,y,this.UP));
-					this.possiblePosition.add(new Position(x,y,this.DOWN));
-					this.possiblePosition.add(new Position(x,y,this.LEFT));
-					this.possiblePosition.add(new Position(x,y,this.RIGHT));
+					envModel.possiblePosition.add(new Position(x,y,UP));
+					envModel.possiblePosition.add(new Position(x,y,DOWN));
+					envModel.possiblePosition.add(new Position(x,y,LEFT));
+					envModel.possiblePosition.add(new Position(x,y,RIGHT));
 				}
 			}
 		}
@@ -128,7 +131,9 @@ public class EnvController extends Environment {
     	clearPercepts();
     	Literal scoutPos = envModel.getPos();
     	addPercept(scoutPos);
+    	
     }
+    
     
     void scoutGoNext() {
         Location scoutLoc = envModel.getAgPos(0);
@@ -165,26 +170,31 @@ public class EnvController extends Environment {
         updatePercepts();
     }
     
+    // we are going to modify this part to connect to the robot
     void getEnvInfo() {
     	if (simulation.isDownOccupied()) {
-    		logger.info("Down occpuied");
+    		//logger.info("Down occpuied");
     		addPercept(OCCUPIED_DOWN);
     	}
     	if (simulation.isLeftOccupied()){
-    		logger.info("left occpuied");
+    		//logger.info("left occpuied");
     		addPercept(OCCUPIED_LEFT);
     	}
     	if (simulation.isRightOccupied()){
-    		logger.info("right occpuied");
+    		//logger.info("right occpuied");
     		addPercept(OCCUPIED_RIGHT);
     	}
     	if (simulation.isUpOccupied()){
-    		logger.info("Up occpuied");
+    		//logger.info("Up occpuied");
     		addPercept(OCCUPIED_UP);
     	}
+    	String color = simulation.getGridColor();
+    	logger.info("the color is " + color);
+    	addPercept("color("+color+")");
     }
     
-    
+    // belief: color()
+    // colors are red = critical, blue, green
     
     
     // this class was totally designed for testing before applying to real robots
@@ -244,6 +254,18 @@ public class EnvController extends Environment {
     		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
     	}
     	
+    	public String getGridColor() {
+    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
+    		if (scoutLoc.equals(realVictims[0])) {
+    			return RED;
+    		} else if (scoutLoc.equals(realVictims[1])) {
+    			return BLUE;
+    		} else if (scoutLoc.equals(realVictims[2])){
+    			return GREEN;
+    		} else {
+    			return WHITE;
+    		}
+    	}
     }
 }
 
