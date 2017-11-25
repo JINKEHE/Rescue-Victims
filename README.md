@@ -5,5 +5,3 @@ University of Liverpool COMP329 Assignment 2 Group 15
 #### Jiafeng Shou <J.Shou@student.liverpool.ac.uk> 
 #### Jinke He <J.He26@student.liverpool.ac.uk>
 #### Cameron Guest <C.Guest@student.liverpool.ac.uk>
-
-#### Languages: Java, Jason, Lejos EV3
