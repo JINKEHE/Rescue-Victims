@@ -48,6 +48,7 @@ import jason.environment.grid.GridWorldView;
             		drawVictim(g, x, y);
             		break;
         	}
+			// drawClones(g);
         }
         /*
         public void drawAgent(Graphics g, int x, int y, Color c, int id) {
@@ -62,7 +63,15 @@ import jason.environment.grid.GridWorldView;
         }
 */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
-			g.setColor(POSSIBILE_SCOUNT_COLOR);
+			int xPoint[] = { x * cellSizeW, (x + 1) * cellSizeW, (int) ((0.5 + x) * cellSizeW) };
+			int yPoint[] = { y * cellSizeH, y * cellSizeH, (y + 1) * cellSizeH };
+			Polygon triangle = new Polygon(xPoint, yPoint, 3);
+			g.fillPolygon(triangle);
+			g.setColor(FONT_COLOR);
+        }
+        
+        public void drawClones(Graphics g) {
+        	g.setColor(POSSIBILE_SCOUNT_COLOR);
 			// System.out.println("1");
 			System.out.println(envModel.possiblePosition.size());
 			for (Position pos : envModel.possiblePosition) {
@@ -97,11 +106,6 @@ import jason.environment.grid.GridWorldView;
 					return;
 				}
 			}
-			int xPoint[] = { x * cellSizeW, (x + 1) * cellSizeW, (int) ((0.5 + x) * cellSizeW) };
-			int yPoint[] = { y * cellSizeH, y * cellSizeH, (y + 1) * cellSizeH };
-			Polygon triangle = new Polygon(xPoint, yPoint, 3);
-			g.fillPolygon(triangle);
-			g.setColor(FONT_COLOR);
         }
         
         public void drawPotentialVictim(Graphics g, int x, int y) {

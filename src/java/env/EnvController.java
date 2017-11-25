@@ -52,8 +52,6 @@ public class EnvController extends Environment {
     private EnvView envView;
     private Simulation simulation;
     
-
-    
     public static final Literal goScout = Literal.parseLiteral("go(next)");
     public static final Literal getEnvInfo = Literal.parseLiteral("get(info)");
     public static final Literal allPos = Literal.parseLiteral("allPos(Scout)");
@@ -178,6 +176,7 @@ public class EnvController extends Environment {
     		//logger.info("Down occpuied");
     		addPercept(OCCUPIED_DOWN);
     	}
+    	
     	if (simulation.isLeftOccupied()){
     		//logger.info("left occpuied");
     		addPercept(OCCUPIED_LEFT);
@@ -190,10 +189,99 @@ public class EnvController extends Environment {
     		//logger.info("Up occpuied");
     		addPercept(OCCUPIED_UP);
     	}
+    	
+    	
+    	 // rFront[0], rBack[1], rLeft[2], rRight[3]
+    	
+    	// front 
+    	boolean frontROccupied  = simulation.getRelativeOccupied();
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
     	String color = simulation.getGridColor();
     	logger.info("the color is " + color);
     	addPercept("color("+color+")");
+    	cleanDirty();
     }
+    
+    // remove impossible locations
+    void cleanDirty() {
+    	for (Position pos : envModel.possiblePosition) {
+    		// rFront[0], rBack[1], rLeft[2], rRight[3]
+    		
+    	}
+    }
+    
+ // rFront[0], rBack[1], rLeft[2], rRight[3]
+    public String getAbsoluteHeading(String heading, int rHeading) {
+    	switch(heading) {
+    	case UP:
+    		if (rHeading==0) return UP;
+    		if (rHeading==1) return DOWN;
+    		if (rHeading==2) return LEFT;
+    		if (rHeading==3) return RIGHT;
+    		break;
+    	case DOWN:
+    		if (rHeading==0) return DOWN;
+    		if (rHeading==1) return UP;
+    		if (rHeading==2) return RIGHT;
+    		if (rHeading==3) return LEFT;
+    		break;
+    	case LEFT:
+    		if (rHeading==0) return LEFT;
+    		if (rHeading==1) return RIGHT;
+    		if (rHeading==2) return DOWN;
+    		if (rHeading==3) return UP;
+    		break;
+    	case RIGHT:
+    		if (rHeading==0) return RIGHT;
+    		if (rHeading==1) return LEFT;
+    		if (rHeading==2) return UP;
+    		if (rHeading==3) return DOWN;
+    		break;
+    	}
+    	return "GG";
+    } 
+    
+    // rFront[0], rBack[1], rLeft[2], rRight[3]
+    public int getRelativeHeading(String heading, String targetHeading) {
+    	switch(heading) {
+    	case UP:
+    		if (targetHeading.equals(UP)) return 0;
+    		if (targetHeading.equals(DOWN)) return 1;
+    		if (targetHeading.equals(LEFT)) return 2;
+    		if (targetHeading.equals(RIGHT)) return 3;
+    		break;
+    	case DOWN:
+    		if (targetHeading.equals(UP)) return 1;
+    		if (targetHeading.equals(DOWN)) return 0;
+    		if (targetHeading.equals(LEFT)) return 3;
+    		if (targetHeading.equals(RIGHT)) return 2;
+    		break;
+    	case LEFT:
+    		if (targetHeading.equals(UP)) return 3;
+    		if (targetHeading.equals(DOWN)) return 2;
+    		if (targetHeading.equals(LEFT)) return 0;
+    		if (targetHeading.equals(RIGHT)) return 1;
+    		break;
+    	case RIGHT:
+    		if (targetHeading.equals(UP)) return 2;
+    		if (targetHeading.equals(DOWN)) return 3;
+    		if (targetHeading.equals(LEFT)) return 1;
+    		if (targetHeading.equals(RIGHT)) return 0;
+    		break;
+    	}
+    	return 99;
+    } 
+    
     
     // belief: color()
     // colors are red = critical, blue, green
@@ -232,6 +320,8 @@ public class EnvController extends Environment {
     	}
     	
     	// simulation -> these methods should be implemented in robots using sensor
+    	
+    	// jinke's trash
     	public boolean isUpOccupied() {
     		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
     		return isOccupied(scoutLoc.x, scoutLoc.y-1);
@@ -251,6 +341,20 @@ public class EnvController extends Environment {
     		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
 			return isOccupied(scoutLoc.x-1, scoutLoc.y);
 		}
+    	
+    	public boolean isRelativeOccupied(Position pos, int rHeading) {
+    		String abs = getAbsoluteHeading(pos.getHeading(), rHeading);
+    		int x = pos.getX();
+    		int y = pos.getY();
+    		if (abs.equals(UP)) return isOccupied(x, y-1);
+    		if (abs.equals(DOWN)) return isOccupied(x, y+1);
+    		if (abs.equals(LEFT)) return isOccupied(x-1, y);
+    		if (abs.equals(RIGHT)) return isOccupied(x+1, y);
+    		return true;
+    	}
+    	
+    	
+    	// rFront[0], rBack[1], rLeft[2], rRight[3]
     	
     	public boolean isOccupied(int x, int y) {
     		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
