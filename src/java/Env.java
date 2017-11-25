@@ -228,9 +228,9 @@ public class Env extends Environment {
     class Model extends GridWorldModel {
     	private String heading = "down";
     	
-    	String getHeading() {
-    		return heading;
-    	}
+	    	String getHeading() {
+	    		return heading;
+	    	}
     	
         private Model() {
             super(W_GRID, H_GRID, 1);
@@ -257,7 +257,7 @@ public class Env extends Environment {
         
         // 0 - down, 1 - right, 2 - left, 3 - up
         void move(int direction) {
-        	Location scoutLoc = getAgPos(0);
+        		Location scoutLoc = getAgPos(0);
             switch (direction) {
 			case DOWN:
 				scoutLoc.y += 1;
