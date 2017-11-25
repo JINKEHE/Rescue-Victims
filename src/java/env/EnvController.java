@@ -41,7 +41,7 @@ public class EnvController extends Environment {
     private static final int POTENTIAL_VICTIM = 32;
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 500;
+    private static final int DELAY = 1000;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -54,7 +54,7 @@ public class EnvController extends Environment {
     
     public static final Literal goScout = Literal.parseLiteral("go(next)");
     public static final Literal getEnvInfo = Literal.parseLiteral("get(info)");
-    public static final Literal allPos = Literal.parseLiteral("allPos(Scout)");
+    public static final Literal allPos = Literal.parseLiteral("addAll(pos)");
 
     public void init(String[] args) {
     	// add initial beliefs here in the demo
@@ -84,7 +84,6 @@ public class EnvController extends Environment {
     	
         	if (action.equals(goScout)) {
         		scoutGoNext();
-            	for (Position pos : envModel.possiblePosition) pos.moveOneStep("right");
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
             } else if (action.equals(allPos)) {
@@ -117,7 +116,7 @@ public class EnvController extends Environment {
 	void addAllPosition(){
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
-				if(!envModel.hasObject(OBSTACLE,x,y)&&!envModel.hasObject(WALL,x,y)) {
+				if(!isOccupied(x,y)) {
 					envModel.possiblePosition.add(new Position(x,y,UP));
 					envModel.possiblePosition.add(new Position(x,y,DOWN));
 					envModel.possiblePosition.add(new Position(x,y,LEFT));
@@ -129,23 +128,16 @@ public class EnvController extends Environment {
     
     void updatePercepts() {
     	clearPercepts();
-    	Literal scoutPos = envModel.getPosLiteral();
-    	addPercept(scoutPos);
-
+    	if (envModel.locDetermined()) {
+    		Literal scoutPos = envModel.getPosLiteral();
+    		addPercept(scoutPos);
+    	}
     }
     
-    
     void scoutGoNext() {
-        Location scoutLoc = envModel.getAgPos(0);
-        if (scoutLoc.x != envModel.getWidth()-2) {
-        	scoutLoc.x += 1;
-        } else if (scoutLoc.y != envModel.getHeight()-2) {
-        	scoutLoc.y += 1;
-        	scoutLoc.x = 1;
-        }
-        envModel.setAgPos(SCOUT_ID, scoutLoc);
-        simulation.realPos = new Position(scoutLoc.x, scoutLoc.y, envModel.heading);
+        simulation.realPos.relativeMove(0);
         logger.info(""+envModel.possiblePosition.size());
+    	for (Position poss : envModel.possiblePosition) poss.relativeMove(0);
     }
     
     void move(String direction) {
@@ -174,6 +166,12 @@ public class EnvController extends Environment {
     
     // we are going to modify this part to connect to the robot
     void getEnvInfo() {
+    	
+    	// print the possible positions left
+    	for (Position pos : envModel.possiblePosition) {
+    		logger.info(pos.toString());
+    	}
+    	
     	if (simulation.isDownOccupied()) {
     		//logger.info("Down occpuied");
     		addPercept(OCCUPIED_DOWN);
@@ -192,6 +190,12 @@ public class EnvController extends Environment {
     		addPercept(OCCUPIED_UP);
     	}
     	
+    	envView.repaint();
+    	try {
+			Thread.sleep(DELAY);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     	
     	 // rFront[0], rBack[1], rLeft[2], rRight[3]
     	boolean realFront = simulation.isRelativeOccupied(simulation.realPos, 0);
@@ -220,12 +224,22 @@ public class EnvController extends Environment {
     			continue;
     		}  
     	}
+    	
+    	
+    	
+    	
     	envModel.possiblePosition = secondWheel;
     	String color = simulation.getGridColor();
     	logger.info("the color is " + color);
     	addPercept("color("+color+")");
     	//cleanDirty();
+    	envView.repaint();
+    	//
     }
+    
+    public boolean isOccupied(int x, int y) {
+		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
+	}
     
     // remove impossible locations
     /*
@@ -237,67 +251,7 @@ public class EnvController extends Environment {
     }
     */
     
- // rFront[0], rBack[1], rLeft[2], rRight[3]
-    public String getAbsoluteHeading(String heading, int rHeading) {
-    	switch(heading) {
-    	case UP:
-    		if (rHeading==0) return UP;
-    		if (rHeading==1) return DOWN;
-    		if (rHeading==2) return LEFT;
-    		if (rHeading==3) return RIGHT;
-    		break;
-    	case DOWN:
-    		if (rHeading==0) return DOWN;
-    		if (rHeading==1) return UP;
-    		if (rHeading==2) return RIGHT;
-    		if (rHeading==3) return LEFT;
-    		break;
-    	case LEFT:
-    		if (rHeading==0) return LEFT;
-    		if (rHeading==1) return RIGHT;
-    		if (rHeading==2) return DOWN;
-    		if (rHeading==3) return UP;
-    		break;
-    	case RIGHT:
-    		if (rHeading==0) return RIGHT;
-    		if (rHeading==1) return LEFT;
-    		if (rHeading==2) return UP;
-    		if (rHeading==3) return DOWN;
-    		break;
-    	}
-    	return "GG";
-    } 
-    
-    // rFront[0], rBack[1], rLeft[2], rRight[3]
-    public int getRelativeHeading(String heading, String targetHeading) {
-    	switch(heading) {
-    	case UP:
-    		if (targetHeading.equals(UP)) return 0;
-    		if (targetHeading.equals(DOWN)) return 1;
-    		if (targetHeading.equals(LEFT)) return 2;
-    		if (targetHeading.equals(RIGHT)) return 3;
-    		break;
-    	case DOWN:
-    		if (targetHeading.equals(UP)) return 1;
-    		if (targetHeading.equals(DOWN)) return 0;
-    		if (targetHeading.equals(LEFT)) return 3;
-    		if (targetHeading.equals(RIGHT)) return 2;
-    		break;
-    	case LEFT:
-    		if (targetHeading.equals(UP)) return 3;
-    		if (targetHeading.equals(DOWN)) return 2;
-    		if (targetHeading.equals(LEFT)) return 0;
-    		if (targetHeading.equals(RIGHT)) return 1;
-    		break;
-    	case RIGHT:
-    		if (targetHeading.equals(UP)) return 2;
-    		if (targetHeading.equals(DOWN)) return 3;
-    		if (targetHeading.equals(LEFT)) return 1;
-    		if (targetHeading.equals(RIGHT)) return 0;
-    		break;
-    	}
-    	return 99;
-    } 
+
     
     
     // belief: color()
@@ -341,27 +295,23 @@ public class EnvController extends Environment {
     	
     	// jinke's trash
     	public boolean isUpOccupied() {
-    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
-    		return isOccupied(scoutLoc.x, scoutLoc.y-1);
+    		return isOccupied(realPos.getX(), realPos.getY()-1);
     	}
     	
     	public boolean isDownOccupied() {
-    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
-    		return isOccupied(scoutLoc.x, scoutLoc.y+1);
+    		return isOccupied(realPos.getX(), realPos.getY()+1);
     	}
 		
     	public boolean isRightOccupied() {
-    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
-    		return isOccupied(scoutLoc.x+1, scoutLoc.y);	
+    		return isOccupied(realPos.getX()+1, realPos.getY());	
 		}
 		
     	public boolean isLeftOccupied() {
-    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
-			return isOccupied(scoutLoc.x-1, scoutLoc.y);
+			return isOccupied(realPos.getX()-1, realPos.getY());
 		}
     	
     	public boolean isRelativeOccupied(Position pos, int rHeading) {
-    		String abs = getAbsoluteHeading(pos.getHeading(), rHeading);
+    		String abs = Position.getAbsoluteHeading(pos.getHeading(), rHeading);
     		int x = pos.getX();
     		int y = pos.getY();
     		if (abs.equals(UP)) return isOccupied(x, y-1);
@@ -374,17 +324,14 @@ public class EnvController extends Environment {
     	
     	// rFront[0], rBack[1], rLeft[2], rRight[3]
     	
-    	public boolean isOccupied(int x, int y) {
-    		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
-    	}
+    	
     	
     	public String getGridColor() {
-    		Location scoutLoc = envModel.getAgPos(SCOUT_ID);
-    		if (scoutLoc.equals(realVictims[0])) {
+    		if (realPos.getLoc().equals(realVictims[0])) {
     			return RED;
-    		} else if (scoutLoc.equals(realVictims[1])) {
+    		} else if (realPos.getLoc().equals(realVictims[1])) {
     			return BLUE;
-    		} else if (scoutLoc.equals(realVictims[2])){
+    		} else if (realPos.getLoc().equals(realVictims[2])){
     			return GREEN;
     		} else {
     			return WHITE;

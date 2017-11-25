@@ -46,7 +46,6 @@ import jason.environment.grid.GridWorldView;
         	switch (object) {
             	case OBSTACLE: 
             		drawObstacle(g, x, y); 
-            		drawClones(g);
             		break;
             	case WALL:
             		drawObstacle(g, x, y);
