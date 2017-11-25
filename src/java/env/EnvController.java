@@ -220,7 +220,6 @@ public class EnvController extends Environment {
     		}  
     	}
     	envModel.possiblePosition = secondWheel;
-    	
     	String color = simulation.getGridColor();
     	logger.info("the color is " + color);
     	addPercept("color("+color+")");
