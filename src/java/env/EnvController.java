@@ -129,7 +129,7 @@ public class EnvController extends Environment {
     
     void updatePercepts() {
     	clearPercepts();
-    	Literal scoutPos = envModel.getPos();
+    	Literal scoutPos = envModel.getPosLiteral();
     	addPercept(scoutPos);
 
     }
@@ -200,7 +200,8 @@ public class EnvController extends Environment {
     	boolean realRight = simulation.isRelativeOccupied(simulation.realPos, 3);
     	
     	// front 
-    	HashSet<Position> secondWheel = (HashSet<Position>) envModel.possiblePosition.clone();
+    	@SuppressWarnings("unchecked")
+		HashSet<Position> secondWheel = (HashSet<Position>) envModel.possiblePosition.clone();
     	for (Position pos: envModel.possiblePosition) {
     		if (realFront != simulation.isRelativeOccupied(pos, 0)) {
     			secondWheel.remove(pos);
@@ -223,16 +224,18 @@ public class EnvController extends Environment {
     	String color = simulation.getGridColor();
     	logger.info("the color is " + color);
     	addPercept("color("+color+")");
-    	cleanDirty();
+    	//cleanDirty();
     }
     
     // remove impossible locations
+    /*
     void cleanDirty() {
     	for (Position pos : envModel.possiblePosition) {
     		// rFront[0], rBack[1], rLeft[2], rRight[3]
     		
     	}
     }
+    */
     
  // rFront[0], rBack[1], rLeft[2], rRight[3]
     public String getAbsoluteHeading(String heading, int rHeading) {

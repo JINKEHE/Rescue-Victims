@@ -42,7 +42,7 @@ public class EnvModel extends GridWorldModel {
 			addWalls();
 		}
 		setAgPos(0, 1,1);
-		heading = "down";
+		heading = "right";
 	}
 	
 	public void addWalls() {
@@ -56,10 +56,15 @@ public class EnvModel extends GridWorldModel {
 		}
 	}
 	
-	public Literal getPos() {
+	public Literal getPosLiteral() {
 		Location currentLoc = getAgPos(0);
 		Literal currentPos = Literal.parseLiteral("pos("+currentLoc.x+","+currentLoc.y+","+heading+")");
 		return currentPos;
+	}
+	
+	public Position getPosition() {
+		Location currentLoc = getAgPos(0);
+		return new Position(currentLoc.x, currentLoc.y, heading);
 	}
 
 	public boolean isThisGridOccpuied(int x, int y) {
