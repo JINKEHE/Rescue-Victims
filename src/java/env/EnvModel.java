@@ -14,6 +14,11 @@ import jason.environment.grid.Location;
 
 // a grid map
 public class EnvModel extends GridWorldModel {
+	
+	
+	private static final int OBSTACLE = 16;
+    private static final int WALL = 128;
+	
 	// the set of obstacles in this map
 	private Set<Location> obstacles;
 	// the set of possible Victims;
@@ -23,6 +28,7 @@ public class EnvModel extends GridWorldModel {
 	private HashMap<Location, HashMap<Location, LinkedList<Location>>> pathToEachOther;
 	// the heading of the robot
 	public String heading;
+    public HashSet<Position> possiblePosition = new HashSet<Position>();
 	
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
 	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
@@ -35,7 +41,7 @@ public class EnvModel extends GridWorldModel {
 		if (addWalls) {
 			addWalls();
 		}
-		setAgPos(0, 1, 1);
+		setAgPos(0, 1,1);
 		heading = "down";
 	}
 	
@@ -56,7 +62,17 @@ public class EnvModel extends GridWorldModel {
 		return currentPos;
 	}
 
+	public boolean isThisGridOccpuied(int x, int y) {
+		return hasObject(WALL, x, y) || hasObject(OBSTACLE, x, y);
+	}
 	
+	public boolean isThatGridOccupied(int x, int y, String absoluteHeading) {
+		if (absoluteHeading.equals("up")) return isThisGridOccpuied(x, y-1);
+		if (absoluteHeading.equals("down")) return isThisGridOccpuied(x, y+1);
+		if (absoluteHeading.equals("left")) return isThisGridOccpuied(x-1, y);
+		if (absoluteHeading.equals("right")) return isThisGridOccpuied(x+1, y);
+		return true;
+	}
 	
 	// compute the cost it will take to get from one victim to another
 	public void computeCosts() {
@@ -78,6 +94,14 @@ public class EnvModel extends GridWorldModel {
 		}
 	}
 
+	public void chooseAction() {
+		int count;
+		for (int i=0; i<=3; i++) {
+			count = 0;
+		
+		}
+	}
+	
 	// A* path finding algorithm with Location as the basic element
 	public LinkedList<Location> aStarPathFinding(Location start, Location goal) {
 		// initialize the data structures to be used in the search
