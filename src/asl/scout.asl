@@ -11,7 +11,7 @@
 
 /* Plans */
 
-+!start : true <- get(percepts); !localize(scout).
++!start : true <- allPos(Scout).
 
 +!localize(scout) : determined(loc) <- !goTo(next).
 +!localize(scout) : heading(X) & not occupied(X) <- ?heading(X); move(X); get(percepts); !localize(scout).

@@ -11,6 +11,7 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.environment.Environment;
 import jason.environment.grid.Location;
+import jason.functions.log;
 
 
 // the centralised environment
@@ -47,8 +48,11 @@ public class EnvController extends Environment {
     private EnvView envView;
     private Simulation simulation;
     
+    public HashSet<Position> possiblePosition = new HashSet<Position>();
+    
     public static final Literal goScout = Literal.parseLiteral("go(next)");
     public static final Literal getEnvInfo = Literal.parseLiteral("get(info)");
+    public static final Literal allPos = Literal.parseLiteral("allPos(Scout)");
 
     public void init(String[] args) {
     	// add initial beliefs here in the demo
@@ -75,10 +79,13 @@ public class EnvController extends Environment {
             Thread.sleep(DELAY);
         } catch (Exception e) {}
     	try {
+    	
         	if (action.equals(goScout)) {
         		scoutGoNext();
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
+            } else if (action.equals(allPos)) {
+            	addAllPosition();
             } else if (action.getFunctor().equals(MOVE)){
             	move(action.getTerm(0).toString());
             } else {
@@ -87,6 +94,7 @@ public class EnvController extends Environment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    		logger.info(this.possiblePosition.size()+"");
         return true;
     }
 
@@ -94,6 +102,28 @@ public class EnvController extends Environment {
         super.stop();
     }
    
+    void clearDirty() {
+//        if (!percepts.isEmpty()) {
+//            uptodateAgs.clear();
+//            percepts.clear();
+//        }
+    		//this.getPercepts("Scout");
+    		//this.removePercept(per);
+    }
+    
+	void addAllPosition(){
+		for(int x=0;x<this.W_GRID;x++) {
+			for(int y=0;y<this.H_GRID;y++) {
+				if(!envModel.hasObject(OBSTACLE, x,y)&&!envModel.hasObject(WALL, x,y)) {
+					this.possiblePosition.add(new Position(x,y,this.UP));
+					this.possiblePosition.add(new Position(x,y,this.DOWN));
+					this.possiblePosition.add(new Position(x,y,this.LEFT));
+					this.possiblePosition.add(new Position(x,y,this.RIGHT));
+				}
+			}
+		}
+	}
+    
     void updatePercepts() {
     	clearPercepts();
     	Literal scoutPos = envModel.getPos();

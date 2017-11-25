@@ -2,6 +2,7 @@ package env;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Polygon;
 
 import jason.asSyntax.Literal;
 import jason.environment.grid.GridWorldView;
@@ -19,6 +20,7 @@ import jason.environment.grid.GridWorldView;
 	    private static final Color FONT_COLOR = Color.BLACK;
 	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
 	    private static final Color VICTIM_COLOR = Color.RED;
+	    private static final Color POSSIBILE_SCOUNT_COLOR = Color.YELLOW;
 	    
 	    private EnvController controller;
 	    private EnvModel envModel;
@@ -48,7 +50,7 @@ import jason.environment.grid.GridWorldView;
             		break;
         	}
         }
-
+        /*
         public void drawAgent(Graphics g, int x, int y, Color c, int id) {
         	super.drawAgent(g, x, y, SCOUT_COLOR, -1);
         	g.setColor(FONT_COLOR);
@@ -58,6 +60,46 @@ import jason.environment.grid.GridWorldView;
         	if (envModel.getPos().getTerm(2).toString().equals("up")) directions += "U"; 
         	if (envModel.getPos().getTerm(2).toString().equals("down")) directions += "D"; 
             super.drawString(g, x, y, defaultFont, directions);
+        }
+*/
+        public void drawAgent(Graphics g, int x, int y, Color c, int id){
+        		g.setColor(this.POSSIBILE_SCOUNT_COLOR);
+        		//System.out.println("1");
+        		controller.getLogger().info(this.controller.possiblePosition.toArray()[1]+"");
+        		for(Position pos:this.controller.possiblePosition) {
+        			int possible_x = pos.getX();
+        			int possible_y = pos.getY();
+        			System.out.println(pos.getHeading());
+        			controller.getLogger().info(pos.getHeading());
+        			if(pos.getHeading()=="up") {
+        	            int xPoint[] = {possible_x*cellSizeW,(possible_x+1)*cellSizeW,(int)((0.5+possible_x)*cellSizeW)};
+        	            int yPoint[] = {(possible_y+1)*cellSizeH,(possible_y+1)*cellSizeH,possible_y*cellSizeH};
+        	            Polygon triangle = new Polygon(xPoint,yPoint,3);
+        	            g.fillPolygon(triangle);
+        			}else if(pos.getHeading()=="down") {
+        	            int xPoint[] = {possible_x*cellSizeW,(possible_x+1)*cellSizeW,(int)((0.5+possible_x)*cellSizeW)};
+        	            int yPoint[] = {possible_y*cellSizeH,possible_y*cellSizeH,(possible_y+1)*cellSizeH};
+        	            Polygon triangle = new Polygon(xPoint,yPoint,3);
+        	            g.fillPolygon(triangle);
+        			}else if(pos.getHeading()=="left") {
+        	            int xPoint[] = {(possible_x+1)*cellSizeW,(possible_x+1)*cellSizeW,possible_x*cellSizeW};
+        	            int yPoint[] = {possible_y*cellSizeH,(possible_y+1)*cellSizeH,(int)((0.5+possible_y)*cellSizeH)};
+        	            Polygon triangle = new Polygon(xPoint,yPoint,3);
+        	            g.fillPolygon(triangle);
+        			}else if(pos.getHeading()=="right") {
+        	            int xPoint[] = {possible_x*cellSizeW,possible_x*cellSizeW,(possible_x+1)*cellSizeW};
+        	            int yPoint[] = {possible_y*cellSizeH,(possible_y+1)*cellSizeH,(int)((0.5+possible_y)*cellSizeH)};
+        	            Polygon triangle = new Polygon(xPoint,yPoint,3);
+        	            g.fillPolygon(triangle);
+        			}else
+        				return;
+
+        		}
+            int xPoint[] = {x*cellSizeW,(x+1)*cellSizeW,(int)((0.5+x)*cellSizeW)};
+            int yPoint[] = {y*cellSizeH,y*cellSizeH,(y+1)*cellSizeH};
+            Polygon triangle = new Polygon(xPoint,yPoint,3);
+            g.fillPolygon(triangle);
+            g.setColor(FONT_COLOR);
         }
         
         public void drawPotentialVictim(Graphics g, int x, int y) {
