@@ -35,4 +35,21 @@ public class Position {
 	public String toString() {
 		return "Position [x=" + x + ", y=" + y + ", heading=" + heading + "]";
 	}
+	
+	public void moveOneStep(String direction) {
+		switch(direction) {
+		case "down":
+			y += 1;
+			break;
+		case "up":
+			y -= 1;
+			break;
+		case "left":
+			x -= 1;
+			break;
+		case "right":
+			x += 1;
+			break;
+		}
+	}
 }

@@ -37,6 +37,7 @@ import jason.environment.grid.GridWorldView;
 			switch (object) {
             	case OBSTACLE: 
             		drawObstacle(g, x, y); 
+            		drawClones(g);
             		break;
             	case WALL:
             		drawObstacle(g, x, y);
@@ -48,7 +49,7 @@ import jason.environment.grid.GridWorldView;
             		drawVictim(g, x, y);
             		break;
         	}
-			// drawClones(g);
+			 drawClones(g);
         }
         /*
         public void drawAgent(Graphics g, int x, int y, Color c, int id) {

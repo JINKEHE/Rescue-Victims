@@ -84,6 +84,7 @@ public class EnvController extends Environment {
     	
         	if (action.equals(goScout)) {
         		scoutGoNext();
+            	for (Position pos : envModel.possiblePosition) pos.moveOneStep("right");
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
             } else if (action.equals(allPos)) {
@@ -117,7 +118,6 @@ public class EnvController extends Environment {
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
 				if(!envModel.hasObject(OBSTACLE,x,y)&&!envModel.hasObject(WALL,x,y)) {
-					logger.info("ff");
 					envModel.possiblePosition.add(new Position(x,y,UP));
 					envModel.possiblePosition.add(new Position(x,y,DOWN));
 					envModel.possiblePosition.add(new Position(x,y,LEFT));
@@ -131,7 +131,7 @@ public class EnvController extends Environment {
     	clearPercepts();
     	Literal scoutPos = envModel.getPos();
     	addPercept(scoutPos);
-    	
+
     }
     
     
@@ -144,6 +144,8 @@ public class EnvController extends Environment {
         	scoutLoc.x = 1;
         }
         envModel.setAgPos(SCOUT_ID, scoutLoc);
+        simulation.realPos = new Position(scoutLoc.x, scoutLoc.y, envModel.heading);
+        logger.info(""+envModel.possiblePosition.size());
     }
     
     void move(String direction) {
@@ -192,19 +194,32 @@ public class EnvController extends Environment {
     	
     	
     	 // rFront[0], rBack[1], rLeft[2], rRight[3]
+    	boolean realFront = simulation.isRelativeOccupied(simulation.realPos, 0);
+    	boolean realBack = simulation.isRelativeOccupied(simulation.realPos, 1);
+    	boolean realLeft = simulation.isRelativeOccupied(simulation.realPos, 2);
+    	boolean realRight = simulation.isRelativeOccupied(simulation.realPos, 3);
     	
     	// front 
-    	boolean frontROccupied  = simulation.getRelativeOccupied();
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
+    	HashSet<Position> secondWheel = (HashSet<Position>) envModel.possiblePosition.clone();
+    	for (Position pos: envModel.possiblePosition) {
+    		if (realFront != simulation.isRelativeOccupied(pos, 0)) {
+    			secondWheel.remove(pos);
+    			continue;
+    		} 
+    		if (realBack != simulation.isRelativeOccupied(pos, 1)) {
+    			secondWheel.remove(pos);
+    			continue;
+    		}  
+    		if (realLeft != simulation.isRelativeOccupied(pos, 2)) {
+    			secondWheel.remove(pos);
+    			continue;
+    		}  
+    		if (realRight != simulation.isRelativeOccupied(pos, 3)) {
+    			secondWheel.remove(pos);
+    			continue;
+    		}  
+    	}
+    	envModel.possiblePosition = secondWheel;
     	
     	String color = simulation.getGridColor();
     	logger.info("the color is " + color);
@@ -293,6 +308,7 @@ public class EnvController extends Environment {
     	public final Location[] obstacles = new Location[]{new Location(2, 2),new Location(4, 6),new Location(5, 3), new Location(4, 4)};
     	public final Location[] potentialVictims = new Location[]{new Location(4, 3),new Location(7, 3),new Location(1, 3),new Location(3, 6),new Location(5, 5)};
     	public Location[] realVictims; 
+    	public Position realPos = new Position(1, 1, "down");
     	private Simulation(EnvModel envModel) {
     		// draw obstacles
     		for (Location ob: obstacles){
