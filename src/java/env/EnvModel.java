@@ -1,18 +1,19 @@
+package env;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.function.IntPredicate;
 
+import jason.asSyntax.Literal;
+import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.Location;
-import jason.stdlib.intend;
+
+
 
 // a grid map
-public class Model {
-	// the width, height of the grid map
-	private int width, height;
+public class EnvModel extends GridWorldModel {
 	// the set of obstacles in this map
 	private Set<Location> obstacles;
 	// the set of possible Victims;
@@ -20,37 +21,43 @@ public class Model {
 	// costs from one victim to another victim
 	private HashMap<Location, HashMap<Location, Integer>> costToEachOther;
 	private HashMap<Location, HashMap<Location, LinkedList<Location>>> pathToEachOther;
-
-	// constructor 1 with width and height
-	public Model(int W_GRID, int H_GRID) {
-		width = W_GRID;
-		height = H_GRID;
-		obstacles = new HashSet<Location>();
-	}
-
-	// constructor 2 with width, height, set of obstacles and whether there are
-	// walls
-	public Model(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims,
-			boolean addWalls) {
-		width = W_GRID;
-		height = H_GRID;
+	// the heading of the robot
+	public String heading;
+	
+	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
+	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
+		super(W_GRID, H_GRID, 1);
 		obstacles = setOfObstacles;
 		victimsToVisit = setOfPossibleVictims;
 		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();
 		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
 		computeCosts();
 		if (addWalls) {
-			for (int w = 0; w <= width - 1; w++) {
-				obstacles.add(new Location(w, 0));
-				obstacles.add(new Location(w, height - 1));
-			}
-			for (int h = 0; h <= height - 1; h++) {
-				obstacles.add(new Location(0, h));
-				obstacles.add(new Location(width - 1, h));
-			}
+			addWalls();
+		}
+		setAgPos(0, 1, 1);
+		heading = "down";
+	}
+	
+	public void addWalls() {
+		for (int w = 0; w <= width - 1; w++) {
+			obstacles.add(new Location(w, 0));
+			obstacles.add(new Location(w, height - 1));
+		}
+		for (int h = 0; h <= height - 1; h++) {
+			obstacles.add(new Location(0, h));
+			obstacles.add(new Location(width - 1, h));
 		}
 	}
+	
+	public Literal getPos() {
+		Location currentLoc = getAgPos(0);
+		Literal currentPos = Literal.parseLiteral("pos("+currentLoc.x+","+currentLoc.y+","+heading+")");
+		return currentPos;
+	}
 
+	
+	
 	// compute the cost it will take to get from one victim to another
 	public void computeCosts() {
 		for (Location vicOne : victimsToVisit) {
@@ -220,6 +227,7 @@ public class Model {
 		return str;
 	}
 	
+	// why do I need this method?
 	public static String locArrayToStr(Location[] arr) {
 		String str = "[";
 		for (int i=0; i<=arr.length-1; i++) {
@@ -231,14 +239,12 @@ public class Model {
 	}
 	
 	public static void main(String[] args) {
-		Location[] obstacles = new Location[]{new Location(2,1),new
-		Location(2,3)}; Location[] possibleVictims = new Location[]{new
-		Location(2,2),new Location(5,6)}; Set<Location> obstaclesSet = new
-		HashSet<Location>(Arrays.asList(obstacles)); Set<Location>
-		possibleVictimsSet = new
-		HashSet<Location>(Arrays.asList(possibleVictims)); Model model = new
-		Model(9, 8, obstaclesSet, possibleVictimsSet, true);
-		model.visualize(); 
-		System.out.print(locArrayToStr(model.findOrderOfVictimsToVisit(new Location(4,6))));
+		Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3)}; 
+		Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6)}; 
+		Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
+		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
+		EnvModel envModel = new EnvModel(9, 8, obstaclesSet, possibleVictimsSet, true);
+		envModel.visualize(); 
+		System.out.print(locArrayToStr(envModel.findOrderOfVictimsToVisit(new Location(4,6))));
 	}
 }

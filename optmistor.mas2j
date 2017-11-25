@@ -2,12 +2,12 @@ MAS optmistor {
 
 	infrastructure: Centralised
 
-	environment: Env
-
+	environment: env.EnvController
+	
 	agents:
 		doctor;
 		scout;
-
+		
 	aslSourcePath:
 		"src/asl";
 }
