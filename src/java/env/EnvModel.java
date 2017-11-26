@@ -122,22 +122,10 @@ public class EnvModel extends GridWorldModel {
 					LinkedList<Location> path = aStarPathFinding(vicOne, vicTwo);
 					pathToEachOther.get(vicOne).put(vicTwo, path);
 					costToEachOther.get(vicOne).put(vicTwo, path.size());
-					System.out.print("[Location (" + vicOne.toString() + ") to (" + vicTwo.toString() + ")] step: "
-							+ costToEachOther.get(vicOne).get(vicTwo) + ", path: ");
-					printPath(pathToEachOther.get(vicOne).get(vicTwo));
 				}
 			}
 		}
 	}
-
-	public void chooseAction() {
-		//int count;
-		for (int i=0; i<=3; i++) {
-		//	count = 0;
-			
-		}
-	}
-	
 	
 	// A* path finding algorithm with Location as the basic element
 	public LinkedList<Location> aStarPathFinding(Location start, Location goal) {

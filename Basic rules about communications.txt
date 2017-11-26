@@ -1,0 +1,8 @@
+1. The scout would wait until the doctor tells it to start the mission.
+
+
+
+2. The scout fully controls the robot using scoket communications. It orders the robot to scan and move. Data will be transferred to scout from the robot using a specific data format.
+
+
+3. When a victim found, the scout informs the doctor. The scout will not do any pathfinding. However, the doctor will only tell the scout which grid it shoud move to without any information about heading so the scout should figure this out on its own. The localization will be done by the doctor so the scout should report any sensor data back to the doctor.

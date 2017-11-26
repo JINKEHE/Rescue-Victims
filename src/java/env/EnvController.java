@@ -44,6 +44,7 @@ public class EnvController extends Environment {
 	public static final Literal TASK_FINISHED = Literal.parseLiteral("finished(task)");
 	public static final Literal STOP = Literal.parseLiteral("stop(everything)");
 	public static final Literal PLAN = Literal.parseLiteral("plan(path)");
+	public static final Literal INIT_ENV = Literal.parseLiteral("initialize(env)");
 	
 	public static final String MOVE = "move";
 	
@@ -64,7 +65,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 300;
+    private static final int DELAY = 1000;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -83,6 +84,7 @@ public class EnvController extends Environment {
     
 
     public void init(String[] args) {
+    	
     	// add initial beliefs here in the demo
     	Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3), new Location(3,3), new Location(3,4)};
     	Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6),new Location(4,4),new Location(2,5), new Location(1,4)}; 
@@ -94,6 +96,11 @@ public class EnvController extends Environment {
         model.setView(view);
         simulation = new Simulation(model);
     }
+    
+    public void initializeEnv() {
+    	logger.info(""+this.containsPercept(Literal.parseLiteral("man(tom)")));
+    }
+    
     
     /*       the list of internal actions      
      * 				
@@ -128,6 +135,7 @@ public class EnvController extends Environment {
     		Thread.sleep(DELAY);
     		if (action.equals(ADD_ALL)) {
     			addAllPositions();
+    	    	logger.info(this.consultPercepts("scout").toString());
     		} else if (action.equals(REMOVE_IMPOSSIBLE)) {
     			removeImpossiblePositions();
     		} else if (action.getFunctor().equals(EXECUTE)) {
@@ -144,6 +152,12 @@ public class EnvController extends Environment {
     			processColor(action.getTerm(0).toString());
     		} else if (action.equals(PLAN)) {
     			doPlan();
+    		} else if (action.equals(INIT_ENV)){
+    			Thread.sleep(DELAY);
+    			initializeEnv();
+    	    	logger.info(this.consultPercepts("scout").toString());
+    		} else {
+    			return false;
     		}
         	this.addPossibleVictimBelief();
         	if (model.locDetermined) {
@@ -164,7 +178,6 @@ public class EnvController extends Environment {
     }
     
     public ArrayList<String> convertToExecutablePlan(Location[] orderToVisit) {
-    	logger.info("current loc: " + model.getLoc());
     	ArrayList<String> thePlan = new ArrayList<String>();
     	ArrayList<Location> gridsToPass = new ArrayList<Location>();
     	Location loc = model.getLoc();
