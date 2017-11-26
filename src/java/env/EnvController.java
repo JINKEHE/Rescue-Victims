@@ -1,8 +1,7 @@
 package env;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
-import java.awt.Desktop.Action;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,6 +16,13 @@ import jason.environment.grid.Location;
 
 // the centralised environment
 public class EnvController extends Environment {
+	
+	// (front)(back)(left)(right)
+	private static final int RELATIVE_FRONT = 0;
+	private static final int RELATIVE_BACK = 1;
+	private static final int RELATIVE_LEFT = 2;
+	private static final int RELATIVE_RIGHT = 3;
+	
 	
 	private static final int W_GRID = 7 + 2;
 	private static final int H_GRID = 6 + 2;
@@ -84,6 +90,7 @@ public class EnvController extends Environment {
     	
         	if (action.equals(goScout)) {
         		blindMove();
+        		this.updatePercepts();
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
             } else if (action.equals(allPos)) {
@@ -125,6 +132,31 @@ public class EnvController extends Environment {
 			}
 		}
 	}
+	
+	void printAllPosition() {
+		for(int x=0;x<W_GRID;x++) {
+			for(int y=0;y<H_GRID;y++) {
+				if(!isOccupied(x,y)) {
+					Position up = new Position(x,y,UP);
+					Position down = new Position(x,y,DOWN);
+					Position left = new Position(x,y,LEFT);
+					Position right = new Position(x,y,RIGHT);
+					if (model.possiblePosition.contains(up)) {
+						logger.info(up.toString());
+					}
+					if (model.possiblePosition.contains(down)) {
+						logger.info(down.toString());
+					}
+					if (model.possiblePosition.contains(left)) {
+						logger.info(left.toString());
+					}
+					if (model.possiblePosition.contains(right)) {
+						logger.info(right.toString());
+					}
+				}
+			}
+		}
+	}
     
     void updatePercepts() {
     	clearPercepts();
@@ -134,33 +166,9 @@ public class EnvController extends Environment {
     	}
     }
     
-    void blindMove() {
-    	if (!model.locDetermined) {
-    		int action = chooseAction();
-    		logger.info(""+action);
-    		simulation.realPos.relativeMove(action);
-    		for (Position poss : model.possiblePosition) poss.relativeMove(action);
-    		this.removePerceptsByUnif(Literal.parseLiteral("occupied"));
-    	} else {
-    		//move(DOWN);
-    	}
-    }
+
     
- // rFront[0], rBack[1], rLeft[2], rRight[3]
-    int chooseAction() {
-    	Random rn = new Random();
-    	int action = 0;
-    	while (true) {
-    		action = rn.nextInt(4);
-    		logger.info(action+"");
-    		if (action == 0 && containsPercept(OCCUPIED_FRONT))continue;
-    		if (action == 3 && containsPercept(OCCUPIED_RIGHT))continue;
-    		if (action == 2 && containsPercept(OCCUPIED_LEFT))continue;
-    		if (action == 1 && containsPercept(OCCUPIED_BACK))continue;
-    		break;
-    	}
-    	return action;
-    }
+
     
     void move(String direction) {
     	Location scoutLoc = model.getAgPos(SCOUT_ID);
@@ -250,7 +258,8 @@ public class EnvController extends Environment {
     		@SuppressWarnings("unchecked")
 			HashSet<Position> another = (HashSet<Position>) model.possiblePosition.clone();
     		for (Position pos : model.possiblePosition) {
-    			if (!getColorAt(pos.getX(), pos.getX()).equals(POSSIBLE)&&!getColorAt(pos.getX(), pos.getX()).equals(color)) {
+    			if (!getColorAt(pos.getX(), pos.getY()).equals(POSSIBLE) && !getColorAt(pos.getX(), pos.getY()).equals(color)) {
+    				if (pos.equals(simulation.realPos)) logger.info("mei la color");
     				another.remove(pos);
     			}
     		}
@@ -291,39 +300,135 @@ public class EnvController extends Environment {
     public boolean isOccupied(int x, int y) {
 		return (model.hasObject(EnvModel.WALL, x, y) || model.hasObject(EnvModel.OBSTACLE, x, y));
 	}
+ 
+    void blindMove() {
+    	if (!model.locDetermined) {
+
+    		
+    		
+    		int action = chooseAction();
+    		logger.info(""+action);
+    		simulation.realPos.relativeMove(action);
+    		for (Position poss : model.possiblePosition) poss.relativeMove(action);
+    		this.removePerceptsByUnif(Literal.parseLiteral("occupied"));
+    	} else {
+    		//move(DOWN);
+    	}
+    }
+    
+    // for a position, there are 16=2^4 possibilities of occupancy around it.
+    // maybe we can use binary number to represent each case
+    // (front)(back)(left)(right)
+    String getRelativeOccupiedInfo(Position pos){
+    	String str = "";
+    	if (isRelativeOccupied(pos,RELATIVE_FRONT)) str += RELATIVE_FRONT;
+    	if (isRelativeOccupied(pos,RELATIVE_BACK)) str += RELATIVE_BACK;
+    	if (isRelativeOccupied(pos,RELATIVE_LEFT)) str += RELATIVE_LEFT;
+    	if (isRelativeOccupied(pos,RELATIVE_RIGHT)) str += RELATIVE_RIGHT;
+    	return str;
+    }
+    
+    // the double to return is equal to (the number of different scenario after this action/the total number of scenarios after this action)
+    double howThisActionCanDistinguish(HashSet<Position> pool, int action) {
+    	// if action is not valid, return -1
+	    ArrayList<String> results = new ArrayList<String>();
+	    for (Position pos : pool) {
+		    // clone the position (if we use the original one, we need to move it back, which I don't want to do)
+		    Position copy = pos.clone();
+		    // simulate the movement
+		    copy.relativeMove(action);
+		    results.add(getRelativeOccupiedInfo(copy));
+	    }
+	    double totalNum = results.size();
+	    double diffNum = new HashSet<String>(results).size();
+	    return diffNum/totalNum;
+    }
+    
+    // rFront[0], rBack[1], rLeft[2], rRight[3]
+    int chooseAction() {
+    	double[] resultsOfActions = new double[4];
+    	// for invalid actions, the results are -1
+    	resultsOfActions[RELATIVE_FRONT] = containsPercept(OCCUPIED_FRONT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_FRONT);
+    	resultsOfActions[RELATIVE_BACK] = containsPercept(OCCUPIED_BACK) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_BACK);
+    	resultsOfActions[RELATIVE_LEFT] = containsPercept(OCCUPIED_LEFT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_LEFT);
+    	resultsOfActions[RELATIVE_RIGHT] = containsPercept(OCCUPIED_RIGHT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_RIGHT);
+    	// simply pich the one with maximum value
+    	int action = 0;
+    	for (int i=0; i<=3; i++){
+    		if (resultsOfActions[i] >= resultsOfActions[action]) action = i;
+    	}
+    	/*
+    	int action = 0;
+		if (model.possiblePosition.size() == 2) {
+			// try to break tie when there are only two agents
+			// dict: count the nunber of possible scenarios after a specific action
+			// we want to pick one action that is valid and can remove most number of possible positions
+			HashMap<String, Integer> resultsAfterFrontAction = new HashMap<String, Integer>();
+			HashMap<String, Integer> resultsAfterBackAction = new HashMap<String, Integer>();
+			HashMap<String, Integer> resultsAfterLeftAction = new HashMap<String, Integer>();
+			HashMap<String, Integer> resultsAfterRightAction = new HashMap<String, Integer>();
+		} else {
+			// if there are too many possible positions, just move randomly
+	    	Random rn = new Random();
+	    	while (true) {
+	    		action = rn.nextInt(4);
+	    		logger.info(action+"");
+	    		if (action == RELATIVE_FRONT && containsPercept(OCCUPIED_FRONT))continue;
+	    		if (action == RELATIVE_RIGHT && containsPercept(OCCUPIED_RIGHT))continue;
+	    		if (action == RELATIVE_LEFT && containsPercept(OCCUPIED_LEFT))continue;
+	    		if (action == RELATIVE_BACK && containsPercept(OCCUPIED_BACK))continue;
+	    		break;
+	    	}
+		}
+		*/
+    	return action;
+    }
     
     void cleanDirty(){
 	   	 // rFront[0], rBack[1], rLeft[2], rRight[3]
-	   	boolean realFront = simulation.isRelativeOccupied(simulation.realPos, 0);
+	   	boolean realFront = isRelativeOccupied(simulation.realPos, 0);
 	   	if (realFront) addPercept(OCCUPIED_FRONT);
-	   	boolean realBack = simulation.isRelativeOccupied(simulation.realPos, 1);
+	   	boolean realBack = isRelativeOccupied(simulation.realPos, 1);
 		if (realBack)	addPercept(OCCUPIED_BACK);
-	   	boolean realLeft = simulation.isRelativeOccupied(simulation.realPos, 2);
+	   	boolean realLeft = isRelativeOccupied(simulation.realPos, 2);
 	   	if (realLeft) addPercept(OCCUPIED_LEFT);
-	   	boolean realRight = simulation.isRelativeOccupied(simulation.realPos, 3);
+	   	boolean realRight = isRelativeOccupied(simulation.realPos, 3);
 	   	if (realRight) addPercept(OCCUPIED_RIGHT);
 	   	// front 
 	   	@SuppressWarnings("unchecked")
 			HashSet<Position> secondWheel = (HashSet<Position>) model.possiblePosition.clone();
 	   	for (Position pos: model.possiblePosition) {
-	   		if (realFront != simulation.isRelativeOccupied(pos, 0)) {
+	   		if (realFront != isRelativeOccupied(pos, RELATIVE_FRONT)) {
+		   		if (pos.equals(simulation.realPos)) {
+		   			logger.info("mei la front");
+		   		}
 	   			secondWheel.remove(pos);
 	   			continue;
 	   		} 
-	   		if (realBack != simulation.isRelativeOccupied(pos, 1)) {
+	   		if (realBack != isRelativeOccupied(pos, RELATIVE_BACK)) {
+	   			if (pos.equals(simulation.realPos)) {
+	   				logger.info("real="+realBack);
+		   			logger.info("mei la right");
+		   		}
 	   			secondWheel.remove(pos);
 	   			continue;
 	   		}  
-	   		if (realLeft != simulation.isRelativeOccupied(pos, 2)) {
+	   		if (realLeft != isRelativeOccupied(pos, RELATIVE_LEFT)) {
+	   			if (pos.equals(simulation.realPos)) {
+		   			logger.info("mei la left");
+		   		}
 	   			secondWheel.remove(pos);
 	   			continue;
 	   		}  
-	   		if (realRight != simulation.isRelativeOccupied(pos, 3)) {
+	   		if (realRight != isRelativeOccupied(pos, RELATIVE_RIGHT)) {
+	   			if (pos.equals(simulation.realPos)) {
+		   			logger.info("mei la back");
+		   		}
 	   			secondWheel.remove(pos);
 	   			continue;
 	   		}  
 	   	}
-	   	for (Position pos : model.possiblePosition) {logger.info(pos.toString());}
+	   	printAllPosition();
 	   	model.possiblePosition = secondWheel;
     }
     
@@ -338,6 +443,17 @@ public class EnvController extends Environment {
     */
     
 
+	public boolean isRelativeOccupied(Position pos, int rHeading) {
+		String abs = Position.getAbsoluteHeading(pos.getHeading(), rHeading);
+		int x = pos.getX();
+		int y = pos.getY();
+		if (abs.equals(UP)) return isOccupied(x, y-1);
+		if (abs.equals(DOWN)) return isOccupied(x, y+1);
+		if (abs.equals(LEFT)) return isOccupied(x-1, y);
+		if (abs.equals(RIGHT)) return isOccupied(x+1, y);
+		return true;
+	}
+    
     
     
     // belief: color()
@@ -398,16 +514,7 @@ public class EnvController extends Environment {
 			return isOccupied(realPos.getX()-1, realPos.getY());
 		}
     	
-    	public boolean isRelativeOccupied(Position pos, int rHeading) {
-    		String abs = Position.getAbsoluteHeading(pos.getHeading(), rHeading);
-    		int x = pos.getX();
-    		int y = pos.getY();
-    		if (abs.equals(UP)) return isOccupied(x, y-1);
-    		if (abs.equals(DOWN)) return isOccupied(x, y+1);
-    		if (abs.equals(LEFT)) return isOccupied(x-1, y);
-    		if (abs.equals(RIGHT)) return isOccupied(x+1, y);
-    		return true;
-    	}
+
     	
     	
     	// rFront[0], rBack[1], rLeft[2], rRight[3]

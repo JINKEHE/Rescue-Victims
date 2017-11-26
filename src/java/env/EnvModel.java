@@ -290,6 +290,12 @@ public class EnvModel extends GridWorldModel {
 		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
 		EnvModel envModel = new EnvModel(9, 8, obstaclesSet, possibleVictimsSet, true);
 		envModel.visualize(); 
-		System.out.print(locArrayToStr(envModel.findOrderOfVictimsToVisit(new Location(4,6))));
+		System.out.println(locArrayToStr(envModel.findOrderOfVictimsToVisit(new Location(4,6))));
+		Position a = new Position(1,1,"up");
+		Position b = new Position(1,1,"up");
+		HashSet<Position> s = new HashSet<Position>();
+		s.add(a);
+		System.out.println(a.equals(b));
+		System.out.println(s.contains(b));
 	}
 }
