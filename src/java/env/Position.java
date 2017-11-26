@@ -61,6 +61,7 @@ public class Position {
 			x += 1;
 			break;
 		}
+		heading = absHeading;
 	}
 	
 	 // rFront[0], rBack[1], rLeft[2], rRight[3]

@@ -1,6 +1,8 @@
 package env;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+import java.awt.Desktop.Action;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -15,20 +17,21 @@ import jason.environment.grid.Location;
 
 // the centralised environment
 public class EnvController extends Environment {
-
+	
 	private static final int W_GRID = 7 + 2;
 	private static final int H_GRID = 6 + 2;
 	
-	public static final Literal OCCUPIED_DOWN = Literal.parseLiteral("occupied(down)");
+	public static final Literal OCCUPIED_BACK = Literal.parseLiteral("occupied(back)");
 	public static final Literal OCCUPIED_RIGHT = Literal.parseLiteral("occupied(right)");
 	public static final Literal OCCUPIED_LEFT = Literal.parseLiteral("occupied(left)");
-	public static final Literal OCCUPIED_UP = Literal.parseLiteral("occupied(up)");
+	public static final Literal OCCUPIED_FRONT = Literal.parseLiteral("occupied(front)");
 	public static final String MOVE = "move";
 	
 	public static final String RED = "red";
 	public static final String BLUE = "blue";
 	public static final String WHITE = "white";
 	public static final String GREEN = "green";
+	public static final String POSSIBLE = "possible";
 	
     private Logger logger = Logger.getLogger("optmistor."+ EnvController.class.getName());
 
@@ -36,9 +39,6 @@ public class EnvController extends Environment {
     
     private static final int SCOUT_ID = 0;
 
-    private static final int OBSTACLE = 16;
-    private static final int WALL = 128;
-    private static final int POTENTIAL_VICTIM = 32;
     //private static final int VICTIM = 64;
     
     private static final int DELAY = 1000;
@@ -48,7 +48,7 @@ public class EnvController extends Environment {
     private static final String LEFT = "left";
     private static final String UP = "up";
      
-    private EnvModel envModel;
+    private EnvModel model;
     private EnvView envView;
     private Simulation simulation;
     
@@ -63,10 +63,10 @@ public class EnvController extends Environment {
     	Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
 		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
     	// create model and view
-		envModel = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet, true);
-        envView = new EnvView(envModel, this);
-        envModel.setView(envView);
-        simulation = new Simulation(envModel);
+		model = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet, true);
+        envView = new EnvView(model, this);
+        model.setView(envView);
+        simulation = new Simulation(model);
         updatePercepts();
     }
     
@@ -83,7 +83,7 @@ public class EnvController extends Environment {
     	try {
     	
         	if (action.equals(goScout)) {
-        		scoutGoNext();
+        		blindMove();
             } else if (action.equals(getEnvInfo)) {
             	getEnvInfo();
             } else if (action.equals(allPos)) {
@@ -117,10 +117,10 @@ public class EnvController extends Environment {
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
 				if(!isOccupied(x,y)) {
-					envModel.possiblePosition.add(new Position(x,y,UP));
-					envModel.possiblePosition.add(new Position(x,y,DOWN));
-					envModel.possiblePosition.add(new Position(x,y,LEFT));
-					envModel.possiblePosition.add(new Position(x,y,RIGHT));
+					model.possiblePosition.add(new Position(x,y,UP));
+					model.possiblePosition.add(new Position(x,y,DOWN));
+					model.possiblePosition.add(new Position(x,y,LEFT));
+					model.possiblePosition.add(new Position(x,y,RIGHT));
 				}
 			}
 		}
@@ -128,39 +128,62 @@ public class EnvController extends Environment {
     
     void updatePercepts() {
     	clearPercepts();
-    	if (envModel.locDetermined()) {
-    		Literal scoutPos = envModel.getPosLiteral();
+    	if (model.locDetermined) {
+    		Literal scoutPos = model.getPosLiteral();
     		addPercept(scoutPos);
     	}
     }
     
-    void scoutGoNext() {
-        simulation.realPos.relativeMove(0);
-        logger.info(""+envModel.possiblePosition.size());
-    	for (Position poss : envModel.possiblePosition) poss.relativeMove(0);
+    void blindMove() {
+    	if (!model.locDetermined) {
+    		int action = chooseAction();
+    		logger.info(""+action);
+    		simulation.realPos.relativeMove(action);
+    		for (Position poss : model.possiblePosition) poss.relativeMove(action);
+    		this.removePerceptsByUnif(Literal.parseLiteral("occupied"));
+    	} else {
+    		//move(DOWN);
+    	}
+    }
+    
+ // rFront[0], rBack[1], rLeft[2], rRight[3]
+    int chooseAction() {
+    	Random rn = new Random();
+    	int action = 0;
+    	while (true) {
+    		action = rn.nextInt(4);
+    		logger.info(action+"");
+    		if (action == 0 && containsPercept(OCCUPIED_FRONT))continue;
+    		if (action == 3 && containsPercept(OCCUPIED_RIGHT))continue;
+    		if (action == 2 && containsPercept(OCCUPIED_LEFT))continue;
+    		if (action == 1 && containsPercept(OCCUPIED_BACK))continue;
+    		break;
+    	}
+    	return action;
     }
     
     void move(String direction) {
-    	Location scoutLoc = envModel.getAgPos(0);
+    	Location scoutLoc = model.getAgPos(SCOUT_ID);
         switch (direction) {
 		case DOWN:
 			scoutLoc.y += 1;
-			envModel.heading = "down";
+			model.heading = "down";
 			break;
 		case RIGHT:
 			scoutLoc.x += 1;
-			envModel.heading = "right";
+			model.heading = "right";
 			break;
 		case LEFT:
 			scoutLoc.x -= 1;
-			envModel.heading = "left";
+			model.heading = "left";
 			break;
 		case UP:
 			scoutLoc.y -= 1;
-			envModel.heading = "up";
+			model.heading = "up";
 			break;
 		}
-        envModel.setAgPos(0, scoutLoc);
+        model.setAgPos(0, scoutLoc);
+        model.heading = direction;
         updatePercepts();
     }
     
@@ -168,10 +191,10 @@ public class EnvController extends Environment {
     void getEnvInfo() {
     	
     	// print the possible positions left
-    	for (Position pos : envModel.possiblePosition) {
+    	/*for (Position pos : model.possiblePosition) {
     		logger.info(pos.toString());
-    	}
-    	
+    	}*/
+    	/*
     	if (simulation.isDownOccupied()) {
     		//logger.info("Down occpuied");
     		addPercept(OCCUPIED_DOWN);
@@ -189,6 +212,7 @@ public class EnvController extends Environment {
     		//logger.info("Up occpuied");
     		addPercept(OCCUPIED_UP);
     	}
+    	*/
     	
     	envView.repaint();
     	try {
@@ -197,49 +221,111 @@ public class EnvController extends Environment {
 			e.printStackTrace();
 		}
     	
-    	 // rFront[0], rBack[1], rLeft[2], rRight[3]
-    	boolean realFront = simulation.isRelativeOccupied(simulation.realPos, 0);
-    	boolean realBack = simulation.isRelativeOccupied(simulation.realPos, 1);
-    	boolean realLeft = simulation.isRelativeOccupied(simulation.realPos, 2);
-    	boolean realRight = simulation.isRelativeOccupied(simulation.realPos, 3);
+    	String color = getCurrentColor();
+    	processCurrentColor(color);
     	
-    	// front 
-    	@SuppressWarnings("unchecked")
-		HashSet<Position> secondWheel = (HashSet<Position>) envModel.possiblePosition.clone();
-    	for (Position pos: envModel.possiblePosition) {
-    		if (realFront != simulation.isRelativeOccupied(pos, 0)) {
-    			secondWheel.remove(pos);
-    			continue;
-    		} 
-    		if (realBack != simulation.isRelativeOccupied(pos, 1)) {
-    			secondWheel.remove(pos);
-    			continue;
-    		}  
-    		if (realLeft != simulation.isRelativeOccupied(pos, 2)) {
-    			secondWheel.remove(pos);
-    			continue;
-    		}  
-    		if (realRight != simulation.isRelativeOccupied(pos, 3)) {
-    			secondWheel.remove(pos);
-    			continue;
-    		}  
+    	
+    	
+    	if (model.locDetermined == false) {
+    		cleanDirty();
     	}
     	
+    	// there is only one location possible, then the location is determined
+    	if (model.locDetermined==false && model.possiblePosition.size() == 1) {
+    		Position pos = model.possiblePosition.toArray(new Position[1])[0];
+    		model.setAgPos(SCOUT_ID, pos.getLoc());
+    		model.heading = pos.getHeading();
+    		model.locDetermined = true;
+    		envView.repaint();
+    	}
     	
-    	
-    	
-    	envModel.possiblePosition = secondWheel;
-    	String color = simulation.getGridColor();
-    	logger.info("the color is " + color);
-    	addPercept("color("+color+")");
     	//cleanDirty();
     	envView.repaint();
     	//
     }
     
+    
+    public void processCurrentColor(String color) {
+    	if (!model.locDetermined) {
+    		@SuppressWarnings("unchecked")
+			HashSet<Position> another = (HashSet<Position>) model.possiblePosition.clone();
+    		for (Position pos : model.possiblePosition) {
+    			if (!getColorAt(pos.getX(), pos.getX()).equals(POSSIBLE)&&!getColorAt(pos.getX(), pos.getX()).equals(color)) {
+    				another.remove(pos);
+    			}
+    		}
+    		model.possiblePosition = another;
+    	} else {
+    		model.remove(EnvModel.POTENTIAL_VICTIM, model.getLoc());
+    		if (color.equals(RED)) model.add(EnvModel.RED_VICTIM, model.getLoc());
+    		if (color.equals(BLUE)) model.add(EnvModel.BLUE_VICTIM, model.getLoc());
+    		if (color.equals(GREEN)) model.add(EnvModel.GREEN_VICTIM, model.getLoc());
+    	}
+    }
+    
+    public String getCurrentColor() {
+    	String color = simulation.getGridColor();
+    	addPercept("color("+color+")");
+    	logger.info("the color is " + color);
+    	return color;
+    }
+    
+    
+    // get the color of a grid 
+    // if there's possible victim and we don't know its serverity, the value is possible
+    public String getColorAt(int x, int y) {
+    	if (model.hasObject(EnvModel.RED_VICTIM, x, y)){
+    		return RED;
+    	} else if (model.hasObject(EnvModel.BLUE_VICTIM, x, y)) {
+    		return BLUE;
+    	} else if (model.hasObject(EnvModel.GREEN_VICTIM, x, y)) {
+    		return GREEN;
+    	} else if (model.hasObject(EnvModel.POTENTIAL_VICTIM, x, y)){
+    		return POSSIBLE;
+    	} else {
+    		return WHITE;
+    	}
+    }
+    
+    
     public boolean isOccupied(int x, int y) {
-		return (envModel.hasObject(WALL, x, y) || envModel.hasObject(OBSTACLE, x, y));
+		return (model.hasObject(EnvModel.WALL, x, y) || model.hasObject(EnvModel.OBSTACLE, x, y));
 	}
+    
+    void cleanDirty(){
+	   	 // rFront[0], rBack[1], rLeft[2], rRight[3]
+	   	boolean realFront = simulation.isRelativeOccupied(simulation.realPos, 0);
+	   	if (realFront) addPercept(OCCUPIED_FRONT);
+	   	boolean realBack = simulation.isRelativeOccupied(simulation.realPos, 1);
+		if (realBack)	addPercept(OCCUPIED_BACK);
+	   	boolean realLeft = simulation.isRelativeOccupied(simulation.realPos, 2);
+	   	if (realLeft) addPercept(OCCUPIED_LEFT);
+	   	boolean realRight = simulation.isRelativeOccupied(simulation.realPos, 3);
+	   	if (realRight) addPercept(OCCUPIED_RIGHT);
+	   	// front 
+	   	@SuppressWarnings("unchecked")
+			HashSet<Position> secondWheel = (HashSet<Position>) model.possiblePosition.clone();
+	   	for (Position pos: model.possiblePosition) {
+	   		if (realFront != simulation.isRelativeOccupied(pos, 0)) {
+	   			secondWheel.remove(pos);
+	   			continue;
+	   		} 
+	   		if (realBack != simulation.isRelativeOccupied(pos, 1)) {
+	   			secondWheel.remove(pos);
+	   			continue;
+	   		}  
+	   		if (realLeft != simulation.isRelativeOccupied(pos, 2)) {
+	   			secondWheel.remove(pos);
+	   			continue;
+	   		}  
+	   		if (realRight != simulation.isRelativeOccupied(pos, 3)) {
+	   			secondWheel.remove(pos);
+	   			continue;
+	   		}  
+	   	}
+	   	for (Position pos : model.possiblePosition) {logger.info(pos.toString());}
+	   	model.possiblePosition = secondWheel;
+    }
     
     // remove impossible locations
     /*
@@ -264,25 +350,27 @@ public class EnvController extends Environment {
     	public final Location[] obstacles = new Location[]{new Location(2, 2),new Location(4, 6),new Location(5, 3), new Location(4, 4)};
     	public final Location[] potentialVictims = new Location[]{new Location(4, 3),new Location(7, 3),new Location(1, 3),new Location(3, 6),new Location(5, 5)};
     	public Location[] realVictims; 
-    	public Position realPos = new Position(1, 1, "down");
+    	public Position realPos = new Position(5, 1, "down");
     	private Simulation(EnvModel envModel) {
     		// draw obstacles
     		for (Location ob: obstacles){
-    			envModel.add(OBSTACLE, ob);
+    			envModel.add(EnvModel.OBSTACLE, ob);
     		}
     		// draw possible victims
     		for (Location pv: potentialVictims){
-    			envModel.add(POTENTIAL_VICTIM, pv);
+    			envModel.add(EnvModel.POTENTIAL_VICTIM, pv);
     		}
     		// draw walls
     		for (int w = 0; w <= W_GRID - 1; w ++) {
     			for (int h = 0; h <= H_GRID - 1; h ++) {
-    				if ((w==0||w==W_GRID-1||h == 0||h==H_GRID-1) && !envModel.hasObject(WALL,w,h)) {
-    					envModel.add(WALL, w, h);
+    				if ((w==0||w==W_GRID-1||h == 0||h==H_GRID-1) && !envModel.hasObject(EnvModel.WALL,w,h)) {
+    					envModel.add(EnvModel.WALL, w, h);
     				}
     			} 
     		}
     		List<Location> list = Arrays.asList(potentialVictims);
+    		Collections.shuffle(list);
+    		Collections.shuffle(list);
     		Collections.shuffle(list);
     		realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
     		logger.info("First real victim = "+list.get(0));
@@ -327,11 +415,16 @@ public class EnvController extends Environment {
     	
     	
     	public String getGridColor() {
+    		if (model.locDetermined) realPos = model.getPosition();
+    		System.out.print(realPos.toString());
     		if (realPos.getLoc().equals(realVictims[0])) {
+    			logger.info("give red");
     			return RED;
     		} else if (realPos.getLoc().equals(realVictims[1])) {
+    			logger.info("give blue");
     			return BLUE;
     		} else if (realPos.getLoc().equals(realVictims[2])){
+    			logger.info("give green");
     			return GREEN;
     		} else {
     			return WHITE;

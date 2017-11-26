@@ -15,9 +15,14 @@ import jason.environment.grid.Location;
 // a grid map
 public class EnvModel extends GridWorldModel {
 	
+	private static final int SCOUT_ID = 0;
 	
-	private static final int OBSTACLE = 16;
-    private static final int WALL = 128;
+	public static final int OBSTACLE = 16;
+    public static final int WALL = 128;
+    public static final int POTENTIAL_VICTIM = 32;
+    public static final int RED_VICTIM = 256;
+    public static final int BLUE_VICTIM = 512;
+    public static final int GREEN_VICTIM = 1024;
 	
 	// the set of obstacles in this map
 	private Set<Location> obstacles;
@@ -30,7 +35,7 @@ public class EnvModel extends GridWorldModel {
 	public String heading;
     public HashSet<Position> possiblePosition = new HashSet<Position>();
 	
-    private boolean locationDetermined = false;
+    public boolean locDetermined = false;
     
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
 	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
@@ -43,10 +48,16 @@ public class EnvModel extends GridWorldModel {
 		if (addWalls) {
 			addWalls();
 		}
+		this.setAgPos(SCOUT_ID, 0,0);
 	}
 	
-	public boolean locDetermined() {
-		return locationDetermined;
+	// this method should only be called when the location is determined
+	public Location getLoc(){
+		return getAgPos(SCOUT_ID);
+	}
+	
+	public void setPosition(Position pos) {
+		setAgPos(SCOUT_ID, pos.getLoc());
 	}
 	
 	public void addWalls() {
@@ -68,7 +79,7 @@ public class EnvModel extends GridWorldModel {
 	
 	public Position getPosition() {
 		Location currentLoc = getAgPos(0);
-		return new Position(currentLoc.x, currentLoc.y, heading);
+		return new Position(currentLoc.x, currentLoc.y, this.heading);
 	}
 
 	public boolean isThisGridOccpuied(int x, int y) {
@@ -104,12 +115,13 @@ public class EnvModel extends GridWorldModel {
 	}
 
 	public void chooseAction() {
-		int count;
+		//int count;
 		for (int i=0; i<=3; i++) {
-			count = 0;
-		
+		//	count = 0;
+			
 		}
 	}
+	
 	
 	// A* path finding algorithm with Location as the basic element
 	public LinkedList<Location> aStarPathFinding(Location start, Location goal) {

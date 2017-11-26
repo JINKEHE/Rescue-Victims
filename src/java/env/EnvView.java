@@ -3,23 +3,17 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Polygon;
-import java.util.logging.Logger;
 
 import jason.environment.grid.GridWorldView;
 
 // the view of the environment
 	class EnvView extends GridWorldView {
 		
-		private static final long serialVersionUID = 1L;
-		private static final int OBSTACLE = 16;
-	    private static final int WALL = 128;
-	    private static final int POTENTIAL_VICTIM = 32;
-	    private static final int VICTIM = 64;
+		public static final long serialVersionUID = 1L;
 
 	    //private static final Color SCOUT_COLOR = Color.GREEN;
 	    private static final Color FONT_COLOR = Color.BLACK;
 	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
-	    private static final Color VICTIM_COLOR = Color.RED;
 	    private static final Color SCOUT_COLOR = Color.BLUE;
 	    private static final Color POSSIBILE_SCOUT_COLOR = Color.YELLOW;
 	    
@@ -42,19 +36,24 @@ import jason.environment.grid.GridWorldView;
 		
         public void draw(Graphics g, int x, int y, int object) {
         	//Logger.getAnonymousLogger().info("once");
-			drawClones(g);
         	switch (object) {
-            	case OBSTACLE: 
+            	case EnvModel.OBSTACLE: 
             		drawObstacle(g, x, y); 
             		break;
-            	case WALL:
+            	case EnvModel.WALL:
             		drawObstacle(g, x, y);
             		break;
-            	case POTENTIAL_VICTIM: 
-            		drawPotentialVictim(g, x, y); 
+            	case EnvModel.RED_VICTIM:
+            		drawVictim(g, x, y, "RED");
             		break;
-            	case VICTIM:
-            		drawVictim(g, x, y);
+            	case EnvModel.BLUE_VICTIM:
+            		drawVictim(g, x, y, "BLUE");
+            		break;
+            	case EnvModel.GREEN_VICTIM:
+            		drawVictim(g, x, y, "GREEN");
+            		break;
+            	case EnvModel.POTENTIAL_VICTIM: 
+            		drawPotentialVictim(g, x, y); 
             		break;
         	}
         }
@@ -72,11 +71,14 @@ import jason.environment.grid.GridWorldView;
         }
 */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
-			drawSingleAgent(g, envModel.getPosition());
-			drawClones(g);
+        	if (envModel.locDetermined == true) {
+        		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
+        	} else {
+        		drawClones(g);
+        	}
         }
         
-        public void drawSingleAgent(Graphics g, Position pos) {
+        public void drawSingleAgent(Graphics g, Position pos, Color color) {
         	int[] xPoint = null;
 			int[] yPoint = null;
 			int x = pos.getX(), y = pos.getY();
@@ -94,14 +96,14 @@ import jason.environment.grid.GridWorldView;
 				xPoint = new int[]{x*cellSizeW, x*cellSizeW, (x+1)*cellSizeW};
 				yPoint = new int[]{y*cellSizeH, (y+1)*cellSizeH, (int)((0.5+y)*cellSizeH)};	
 			}
-        	g.setColor(POSSIBILE_SCOUT_COLOR);
+        	g.setColor(color);
 			g.fillPolygon(new Polygon(xPoint, yPoint, 3));
         }
         
         public void drawClones(Graphics g) {
         	g.setColor(POSSIBILE_SCOUT_COLOR);
 			for (Position pos : envModel.possiblePosition) {
-				drawSingleAgent(g, pos);
+				drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
 			}
         }
         
@@ -112,8 +114,10 @@ import jason.environment.grid.GridWorldView;
     		super.drawString(g, x, y, new Font("Arial", Font.BOLD, 12), "Potential Victim");
         }
         
-        public void drawVictim(Graphics g, int x, int y) {
-        	g.setColor(VICTIM_COLOR);
+        public void drawVictim(Graphics g, int x, int y, String color) {
+        	if (color.equals("RED")) g.setColor(Color.RED);
+        	if (color.equals("BLUE")) g.setColor(Color.BLUE);
+        	if (color.equals("GREEN")) g.setColor(Color.GREEN);
     		g.fillRect(x * cellSizeW + 1, y * cellSizeH+1, cellSizeW-1, cellSizeH-1);
     		g.setColor(FONT_COLOR);
     		super.drawString(g, x, y, new Font("Arial", Font.BOLD, 12), "Potential Victim");
