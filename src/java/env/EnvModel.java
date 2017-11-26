@@ -24,8 +24,6 @@ public class EnvModel extends GridWorldModel {
     public static final int BLUE_VICTIM = 512;
     public static final int GREEN_VICTIM = 1024;
 	
-	// the set of obstacles in this map
-	private Set<Location> obstacles;
 	// the set of possible Victims;
 	private Set<Location> victimsToVisit;
 	// costs from one victim to another victim
@@ -40,7 +38,8 @@ public class EnvModel extends GridWorldModel {
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
 	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
 		super(W_GRID, H_GRID, 1);
-		obstacles = setOfObstacles;
+		addObstacles(setOfObstacles);
+		addPossibleVictims(setOfPossibleVictims);
 		victimsToVisit = setOfPossibleVictims;
 		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();
 		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
@@ -51,6 +50,11 @@ public class EnvModel extends GridWorldModel {
 		this.setAgPos(SCOUT_ID, 0,0);
 	}
 	
+	
+
+	
+	
+	
 	// this method should only be called when the location is determined
 	public Location getLoc(){
 		return getAgPos(SCOUT_ID);
@@ -60,14 +64,26 @@ public class EnvModel extends GridWorldModel {
 		setAgPos(SCOUT_ID, pos.getLoc());
 	}
 	
+	public void addObstacles(Set<Location> setOfObstacles) {
+		for (Location loc : setOfObstacles) {
+			this.add(OBSTACLE, loc);
+		}
+	}
+	
+	public void addPossibleVictims(Set<Location> setOfPossibleVictims) {
+		for (Location loc : setOfPossibleVictims) {
+			this.add(POTENTIAL_VICTIM, loc);
+		}
+	}
+	
 	public void addWalls() {
 		for (int w = 0; w <= width - 1; w++) {
-			obstacles.add(new Location(w, 0));
-			obstacles.add(new Location(w, height - 1));
+			add(WALL, new Location(w, 0));
+			add(WALL, new Location(w, height - 1));
 		}
 		for (int h = 0; h <= height - 1; h++) {
-			obstacles.add(new Location(0, h));
-			obstacles.add(new Location(width - 1, h));
+			add(WALL, new Location(0, h));
+			add(WALL, new Location(width - 1, h));
 		}
 	}
 	
@@ -153,7 +169,7 @@ public class EnvModel extends GridWorldModel {
 				int y = besGrid.y + g[1];
 				nextGrid = new Location(x, y);
 				if (y <= height - 1 && x <= width - 1 && y >= 0 && x >= 0 && !closedList.contains(nextGrid)
-						&& !values.containsKey(nextGrid) && !obstacles.contains(nextGrid)) {
+						&& !values.containsKey(nextGrid) && !hasObject(OBSTACLE,nextGrid)) {
 					parents.put(nextGrid, besGrid);
 					if (goal.equals(nextGrid)) {
 						found = true;
@@ -181,7 +197,7 @@ public class EnvModel extends GridWorldModel {
 		String str = "";
 		for (int h = 0; h <= height - 1; h++) {
 			for (int w = 0; w <= width - 1; w++) {
-				if (obstacles.contains(new Location(w, h))) {
+				if (hasObject(OBSTACLE,new Location(w, h))) {
 					str += "1";
 				} else if (victimsToVisit.contains(new Location(w, h))) {
 					str += "?";
@@ -283,6 +299,17 @@ public class EnvModel extends GridWorldModel {
 		return str;
 	}
 	
+	public void test() {
+		try {
+			EnvModel.class.getMethod("theMethod").invoke(this);
+		} catch (Exception e) {
+		} 
+	}
+	
+	public void theMethod() {
+		System.out.println("Success");
+	}
+	
 	public static void main(String[] args) {
 		Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3)}; 
 		Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6)}; 
@@ -297,5 +324,6 @@ public class EnvModel extends GridWorldModel {
 		s.add(a);
 		System.out.println(a.equals(b));
 		System.out.println(s.contains(b));
+		envModel.test();
 	}
 }

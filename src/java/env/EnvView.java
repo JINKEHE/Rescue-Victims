@@ -56,6 +56,7 @@ import jason.environment.grid.GridWorldView;
             		drawPotentialVictim(g, x, y); 
             		break;
         	}
+        	if (!envModel.locDetermined) drawClones(g);
         }
         
         /*
