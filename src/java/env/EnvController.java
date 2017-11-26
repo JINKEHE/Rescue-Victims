@@ -1,5 +1,6 @@
 package env;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -526,7 +527,7 @@ public class EnvController extends Environment {
     class Simulation {
     	// to do: random generation -> automatic testin
     	public Location[] realVictims; 
-    	public Position realPos = new Position(5, 1, "down");
+    	public Position realPos;
     	private Simulation(EnvModel envModel) {
     		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
@@ -534,6 +535,24 @@ public class EnvController extends Environment {
     		logger.info("First real victim = "+list.get(0));
     		logger.info("Second real victim = "+list.get(1));
     		logger.info("Third real victim = "+list.get(2));
+    		realPos = new Position(5, 1, "down");
+    		// generate random heading
+    		List<String> headingList = Arrays.asList(new String[]{LEFT,RIGHT,UP,DOWN});
+    		Collections.shuffle(headingList);
+    		String heading = headingList.get(1);
+    		// generate random position
+    		int x=1, y=1;
+    		while (true) {
+    			Random rn = new Random();
+    			x=rn.nextInt(W_GRID-2)+1;
+    			y=rn.nextInt(H_GRID-2)+1;
+    			if (model.isOccpuied(x, y)){
+    				continue;
+    			} else {
+    				break;
+    			}
+    		}
+    		realPos = new Position(x,y,heading);
     		// index -> severity
     	}
     	

@@ -98,15 +98,15 @@ public class EnvModel extends GridWorldModel {
 		return new Position(currentLoc.x, currentLoc.y, this.heading);
 	}
 
-	public boolean isThisGridOccpuied(int x, int y) {
+	public boolean isOccpuied(int x, int y) {
 		return hasObject(WALL, x, y) || hasObject(OBSTACLE, x, y);
 	}
 	
 	public boolean isThatGridOccupied(int x, int y, String absoluteHeading) {
-		if (absoluteHeading.equals("up")) return isThisGridOccpuied(x, y-1);
-		if (absoluteHeading.equals("down")) return isThisGridOccpuied(x, y+1);
-		if (absoluteHeading.equals("left")) return isThisGridOccpuied(x-1, y);
-		if (absoluteHeading.equals("right")) return isThisGridOccpuied(x+1, y);
+		if (absoluteHeading.equals("up")) return isOccpuied(x, y-1);
+		if (absoluteHeading.equals("down")) return isOccpuied(x, y+1);
+		if (absoluteHeading.equals("left")) return isOccpuied(x-1, y);
+		if (absoluteHeading.equals("right")) return isOccpuied(x+1, y);
 		return true;
 	}
 	
