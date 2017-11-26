@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
-import javax.swing.SpringLayout.Constraints;
-
 import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.environment.Environment;
@@ -41,7 +39,10 @@ public class EnvController extends Environment {
 	public static final Literal ADD_ALL = Literal.parseLiteral("add(all)");
 	public static final Literal REMOVE_IMPOSSIBLE = Literal.parseLiteral("remove(impossible)");
     public static final Literal DETECT_ENV = Literal.parseLiteral("detect(env)");
-	public static final String EXECUTE = "execute";
+	public static final String  EXECUTE = "execute";
+	public static final Literal TASK_FINISHED = Literal.parseLiteral("finished(task)");
+	public static final Literal STOP = Literal.parseLiteral("stop(everything)");
+	public static final Literal PLAN = Literal.parseLiteral("plan(path)");
 	
 	public static final String MOVE = "move";
 	
@@ -62,7 +63,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 1000;
+    private static final int DELAY = 300;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -70,11 +71,15 @@ public class EnvController extends Environment {
     private static final String UP = "up";
      
     private EnvModel model;
-    private EnvView envView;
+    private EnvView view;
     private Simulation simulation;
     
     public static final Literal goScout = Literal.parseLiteral("go(next)");
 
+    
+    private ArrayList<String> thePath;
+    
+    
 
     public void init(String[] args) {
     	// add initial beliefs here in the demo
@@ -84,11 +89,10 @@ public class EnvController extends Environment {
 		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
     	// create model and view
 		model = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet, true);
-        envView = new EnvView(model, this);
-        model.setView(envView);
+        view = new EnvView(model, this);
+        model.setView(view);
         simulation = new Simulation(model);
     }
-    
     
     /*       the list of internal actions      
      * 				
@@ -131,13 +135,73 @@ public class EnvController extends Environment {
     			getEnvInfo();
     		} else if (action.equals(REMOVE_IMPOSSIBLE)) {
     			removeImpossiblePositions();
+    		} else if (action.equals(STOP)) {
+    			stop();
+    		} else if (action.getFunctor().equals("move")) {
+    			move(action.getTerm(0).toString());
+    		} else if (action.getFunctor().equals("process")) {
+    			processColor(action.getTerm(0).toString());
+    		} else if (action.equals(PLAN)) {
+    			doPlan();
     		}
+        	this.addPossibleVictimBelief();
+        	if (model.locDetermined) {
+        		addPercept(model.getPosLiteral());
+        	}
+        	if (thePath != null) {
+        		addPercept(Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
+        	}
         } catch (Exception e) {
             e.printStackTrace();
         }
         return true;
     }
 
+    
+    public void doPlan() {
+    	thePath = convertToExecutablePlan(model.findOrderOfVictimsToVisit(model.getLoc()));
+    }
+    
+    public ArrayList<String> convertToExecutablePlan(Location[] orderToVisit) {
+    	logger.info("current loc: " + model.getLoc());
+    	ArrayList<String> thePlan = new ArrayList<String>();
+    	ArrayList<Location> gridsToPass = new ArrayList<Location>();
+    	Location loc = model.getLoc();
+    	gridsToPass.add(loc);
+    	gridsToPass.addAll(model.aStarPathFinding(model.getLoc(), orderToVisit[0]));
+    	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[0], orderToVisit[1]));
+    	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[1], orderToVisit[2]));
+    	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[2], orderToVisit[3]));
+    	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[3], orderToVisit[4]));
+    	for (int i=0; i<=gridsToPass.size()-2; i++) {
+    		Location next = gridsToPass.get(i+1);
+    		loc = gridsToPass.get(i);
+    		//logger.info(next.toString());
+    		if (next.x == loc.x + 1) {
+    			thePlan.add(RIGHT);
+    			//logger.info(RIGHT);
+    			continue;
+    		}
+			if (next.x == loc.x - 1) {
+				thePlan.add(LEFT);
+				//logger.info(LEFT);
+				continue;
+			}
+			if (next.y == loc.y + 1) {
+				thePlan.add(DOWN);
+				//logger.info(DOWN);
+				continue;
+			}
+			if (next.y == loc.y - 1) {
+				thePlan.add(UP);
+				//logger.info(UP);
+				continue;
+			}
+    	}
+    	return thePlan;
+    }
+    
+    
     public void execute(String actionStr) {
     	int action = Integer.valueOf(actionStr);
     	logger.info("execute" + action);
@@ -154,13 +218,10 @@ public class EnvController extends Environment {
         super.stop();
     }
    
-    void clearDirty() {
-//        if (!percepts.isEmpty()) {
-//            uptodateAgs.clear();
-//            percepts.clear();
-//        }
-    		//this.getPercepts("Scout");
-    		//this.removePercept(per);
+    public void addPossibleVictimBelief() {
+    	for (Location loc : model.victimsToVisit) {
+    		addPercept(Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
+    	}
     }
     
 	void addAllPositions(){
@@ -211,6 +272,9 @@ public class EnvController extends Environment {
     		Literal scoutPos = model.getPosLiteral();
     		addPercept(scoutPos);
     	}
+    	if (thePath != null && thePath.size() != 0) {
+    		addPercept(Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
+    	}
     }
     
 
@@ -222,38 +286,38 @@ public class EnvController extends Environment {
         switch (direction) {
 		case DOWN:
 			scoutLoc.y += 1;
-			model.heading = "down";
+			model.heading = DOWN;
 			break;
 		case RIGHT:
 			scoutLoc.x += 1;
-			model.heading = "right";
+			model.heading = RIGHT;
 			break;
 		case LEFT:
 			scoutLoc.x -= 1;
-			model.heading = "left";
+			model.heading = LEFT;
 			break;
 		case UP:
 			scoutLoc.y -= 1;
-			model.heading = "up";
+			model.heading = UP;
 			break;
 		}
         model.setAgPos(0, scoutLoc);
         model.heading = direction;
+        thePath.remove(0);
         updatePercepts();
     }
     
     // we are going to modify this part to connect to the robot
     void getEnvInfo() {
-    	envView.repaint();
+    	view.repaint();
     	// before localization finished
     	if (!model.locDetermined) {
         	getColorFromRobot();
         	getOccpuiedInfoFromRobot();
     	} else {
-    		// after
-    		// add code later
+    		getColorFromRobot();
     	}
-    	envView.repaint();
+    	view.repaint();
     }
     
 	// !!! this method should be modified !!! £$%^&*())))(*&^%$£$%^&*(*&^%$%^&*
@@ -276,7 +340,7 @@ public class EnvController extends Environment {
     
     @SuppressWarnings("unchecked")
 	void removeImpossiblePositions(){
-    	envView.repaint();
+    	view.repaint();
     	String color = getColorInBeliefBase();
     	// remove impossible positiosn according to the occupancy information and the color of the grid
 		HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
@@ -303,7 +367,7 @@ public class EnvController extends Environment {
 			}
 	   	}
 	   	model.possiblePosition = clonePool;
-	   	printAllPosition();
+	   	//printAllPosition();
     	// there is only one location possible, then the location is determined
     	if (model.possiblePosition.size()==1) {
     		Position pos = model.possiblePosition.toArray(new Position[1])[0];
@@ -319,15 +383,23 @@ public class EnvController extends Environment {
 			Thread.sleep(DELAY);
 		} catch (InterruptedException e) {
 		}
-		envView.repaint();
+		view.repaint();
     }
     
     
     public void processColor(String color) {
     	model.remove(EnvModel.POTENTIAL_VICTIM, model.getLoc());
-    	if (color.equals(RED)) model.add(EnvModel.RED_VICTIM, model.getLoc());
+    	if (color.equals(RED)) {
+    		model.add(EnvModel.RED_VICTIM, model.getLoc());
+    	}
     	if (color.equals(BLUE)) model.add(EnvModel.BLUE_VICTIM, model.getLoc());
     	if (color.equals(GREEN)) model.add(EnvModel.GREEN_VICTIM, model.getLoc());
+    	view.repaint();
+    	model.victimsToVisit.remove(model.getLoc());
+    	if (model.victimsToVisit.size() == 0) {
+    		addPercept(TASK_FINISHED);
+    	}
+    	view.repaint();
     }
     
     public void getColorFromRobot() {
@@ -452,13 +524,11 @@ public class EnvController extends Environment {
     
     // this class was totally designed for testing before applying to real robots
     class Simulation {
-    	// to do: random generation -> automatic testing
-    	public final Location[] obstacles = new Location[]{new Location(2, 2),new Location(4, 6),new Location(5, 3), new Location(4, 4)};
-    	public final Location[] potentialVictims = new Location[]{new Location(4, 3),new Location(7, 3),new Location(1, 3),new Location(3, 6),new Location(5, 5)};
+    	// to do: random generation -> automatic testin
     	public Location[] realVictims; 
     	public Position realPos = new Position(5, 1, "down");
     	private Simulation(EnvModel envModel) {
-    		List<Location> list = Arrays.asList(potentialVictims);
+    		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
     		realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
     		logger.info("First real victim = "+list.get(0));

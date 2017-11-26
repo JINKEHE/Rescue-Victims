@@ -25,7 +25,7 @@ public class EnvModel extends GridWorldModel {
     public static final int GREEN_VICTIM = 1024;
 	
 	// the set of possible Victims;
-	private Set<Location> victimsToVisit;
+	public Set<Location> victimsToVisit;
 	// costs from one victim to another victim
 	private HashMap<Location, HashMap<Location, Integer>> costToEachOther;
 	private HashMap<Location, HashMap<Location, LinkedList<Location>>> pathToEachOther;
@@ -169,7 +169,7 @@ public class EnvModel extends GridWorldModel {
 				int y = besGrid.y + g[1];
 				nextGrid = new Location(x, y);
 				if (y <= height - 1 && x <= width - 1 && y >= 0 && x >= 0 && !closedList.contains(nextGrid)
-						&& !values.containsKey(nextGrid) && !hasObject(OBSTACLE,nextGrid)) {
+						&& !values.containsKey(nextGrid) && !hasObject(OBSTACLE,nextGrid) && !hasObject(WALL,nextGrid)) {
 					parents.put(nextGrid, besGrid);
 					if (goal.equals(nextGrid)) {
 						found = true;

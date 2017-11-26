@@ -19,13 +19,23 @@
  *        
  */
  
-/* list of beliefs */
+/* list of beliefs */ 
 
 /*
  *         name                 functinality
+ *	       
+ *         determined(location)	   
+ *  
+ *         color(x) 
  * 
- *         color 
+ * 		   pos(x,y,heading)
  * 
+ *   
+ *		   occupied()
+ * 
+ *         bestAction()
+ * 
+ *         nextMove()	   
  *        
  */
 
@@ -35,12 +45,16 @@
 
 +!do(localization) : not determined(location) <- ?bestAction(X); execute(X); detect(env); remove(impossible); !do(localization).
 
-+!do(localization) : determined(location) <- .print("localization finished.") ; !next(episode).
-
-+!next(episode) : true <- !next(episode).
++!do(localization) : determined(location) <- .print("localization finished.") ; plan(path); !do(task).
 
 
++!do(task): pos(X,Y,Z) & potentialVictim(X,Y) <- detect(env); ?color(Color); process(Color); !reschedule(plan).
 
++!do(task): pos(X,Y,Z) & not potentialVictim(X,Y) <- ?bestMove(M); move(M); !do(task).
+
++!reschedule(plan): not finished(task) <- ?bestMove(X); move(X); !do(task).
+
++!reschedule(plan): finished(task) <- stop(everything).
 
 
 

@@ -72,10 +72,12 @@ import jason.environment.grid.GridWorldView;
         }
 */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
-        	if (envModel.locDetermined == true) {
+        	if (envModel.locDetermined == true && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
         		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
-        	} else {
+        	} else if (!envModel.locDetermined){
         		drawClones(g);
+        	} else {
+        		// no thing
         	}
         }
         
@@ -120,7 +122,5 @@ import jason.environment.grid.GridWorldView;
         	if (color.equals("BLUE")) g.setColor(Color.BLUE);
         	if (color.equals("GREEN")) g.setColor(Color.GREEN);
     		g.fillRect(x * cellSizeW + 1, y * cellSizeH+1, cellSizeW-1, cellSizeH-1);
-    		g.setColor(FONT_COLOR);
-    		super.drawString(g, x, y, new Font("Arial", Font.BOLD, 12), "Potential Victim");
         }
     }
