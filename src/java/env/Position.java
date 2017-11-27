@@ -1,5 +1,6 @@
 package env;
 
+import jason.asSyntax.Literal;
 import jason.environment.grid.Location;
 
 public class Position {
@@ -42,6 +43,10 @@ public class Position {
 	@Override
 	public String toString() {
 		return "Position [x=" + x + ", y=" + y + ", heading=" + heading + "]";
+	}
+	
+	public Literal toLiteral() {
+		return Literal.parseLiteral("pos("+x+","+y+","+heading+")");
 	}
 	
 	// rFront[0], rBack[1], rLeft[2], rRight[3]

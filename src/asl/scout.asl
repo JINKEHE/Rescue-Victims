@@ -41,47 +41,78 @@
 
 /* start of initial beliefs here */
 
-man(tom).
 
 /* end of initial beliefs here */
 
-!start.
+// Communication
 
 +!start : true 
-	<- add(all); 
-	detect(env); 
-	remove(impossible); 
+	<- .print("Doctor told me to get started."); 
+	add(all);
+	!scan(around);  
+	.print("Where am I? I started to do localization.");
 	!do(localization).
+
++!scan(around): true
+	<- detect(env);
+	remove(impossible);
+	!check(localization).
+
++!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
++!check(localization).
 
 +!do(localization) : not determined(location) 
 	<- ?bestAction(X); 
 	execute(X); 
-	detect(env); 
-	remove(impossible); 
+	!scan(around); 
 	!do(localization).
 
 +!do(localization) : determined(location) 
-	<- .print("localization finished."); 
-	plan(path); !do(task).
+	<- .print("Now I know where I am. Localization finished."); 
+	plan(path); 
+	!do(task).
+
++!do(localization) <- .print("GG").
 
 +!do(task): pos(X,Y,Z) & potentialVictim(X,Y) 
 	<- detect(env); 
 	?color(Color); 
-	process(Color); 
+	!found(Color); 
+	-potentialVictim(X,Y)
+	update(model);
 	!reschedule(plan).
+
++!found(blue): true 
+	<- ?pos(X,Y,_); 
+	.send(doctor,tell,blue(X,Y)); 
+	.print("Serious victim found.").
+
++!found(red): true 
+	<- ?pos(X,Y,_); 
+	.send(doctor,tell,red(X,Y)); 
+	.print("Criticial victim found").
+
++!found(green): true 
+	<- ?pos(X,Y,_); 
+	.send(doctor,tell,green(X,Y)); 
+	.print("Minor victim found").
+
++!found(white): true 
+	<- ?pos(X,Y,_); 
+	.print("No victim here.").
 
 +!do(task): pos(X,Y,Z) & not potentialVictim(X,Y) 
 	<- ?bestMove(M); 
 	move(M); 
 	!do(task).
 
-+!reschedule(plan): not finished(task) 
++!reschedule(plan): red(_,_) & blue(_,_) & green(_,_) 
+	<- -potentialVictim(_,_); 
+	stop(everything).
+
++!reschedule(plan): true 
 	<- ?bestMove(X); 
 	move(X); 
 	!do(task).
-
-+!reschedule(plan): finished(task) 
-	<- stop(everything).
-
 
 

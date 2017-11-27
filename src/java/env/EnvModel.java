@@ -33,7 +33,6 @@ public class EnvModel extends GridWorldModel {
 	public String heading;
     public HashSet<Position> possiblePosition = new HashSet<Position>();
 	
-    public boolean locDetermined = false;
     
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
 	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {

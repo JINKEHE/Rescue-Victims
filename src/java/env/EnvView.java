@@ -4,6 +4,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Polygon;
 
+
 import jason.environment.grid.GridWorldView;
 
 // the view of the environment
@@ -14,13 +15,14 @@ import jason.environment.grid.GridWorldView;
 	    //private static final Color SCOUT_COLOR = Color.GREEN;
 	    private static final Color FONT_COLOR = Color.BLACK;
 	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
-	    private static final Color SCOUT_COLOR = Color.BLUE;
+	    private static final Color SCOUT_COLOR = Color.BLACK;
 	    private static final Color POSSIBILE_SCOUT_COLOR = Color.YELLOW;
 	    
 	    private static final String UP = "up";
 	    private static final String DOWN = "down";
 	    private static final String LEFT = "left";
 	    private static final String RIGHT = "right";
+	    private EnvController controller;
 	    
 	    //private EnvController controller;
 	    private EnvModel envModel;
@@ -32,6 +34,7 @@ import jason.environment.grid.GridWorldView;
             defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
             setVisible(true);
             repaint();
+            this.controller = controller;
         }
 		
         public void draw(Graphics g, int x, int y, int object) {
@@ -56,7 +59,7 @@ import jason.environment.grid.GridWorldView;
             		drawPotentialVictim(g, x, y); 
             		break;
         	}
-        	if (!envModel.locDetermined) drawClones(g);
+        	if (!controller.containsPercept(EnvController.DETERMINED_LOC)) drawClones(g);
         }
         
         /*
@@ -72,9 +75,9 @@ import jason.environment.grid.GridWorldView;
         }
 */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
-        	if (envModel.locDetermined == true && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
+        	if (controller.containsPercept(EnvController.DETERMINED_LOC) == true && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
         		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
-        	} else if (!envModel.locDetermined){
+        	} else if (!controller.containsPercept(EnvController.DETERMINED_LOC)){
         		drawClones(g);
         	} else {
         		// no thing

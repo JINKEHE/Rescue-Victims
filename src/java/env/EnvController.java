@@ -23,9 +23,13 @@ public class EnvController extends Environment {
 	private static final int RELATIVE_LEFT = 2;
 	private static final int RELATIVE_RIGHT = 3;
 	
+	private static final String SCOUT = "scout";
+	private static final String DOCTOR = "doctor";
 	
 	private static final int W_GRID = 7 + 2;
 	private static final int H_GRID = 6 + 2;
+	
+	static final Literal test = Literal.parseLiteral("test");
 	
 	public static final Literal COLOR_POSSIBLE = Literal.parseLiteral("color(possible)");
 	public static final Literal COLOR_WHITE = Literal.parseLiteral("color(white)");
@@ -45,6 +49,7 @@ public class EnvController extends Environment {
 	public static final Literal STOP = Literal.parseLiteral("stop(everything)");
 	public static final Literal PLAN = Literal.parseLiteral("plan(path)");
 	public static final Literal INIT_ENV = Literal.parseLiteral("initialize(env)");
+	public static final Literal UPDATE_MODEL = Literal.parseLiteral("update(model)");
 	
 	public static final String MOVE = "move";
 	
@@ -65,7 +70,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 1000;
+    private static final int DELAY = 500;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -95,10 +100,30 @@ public class EnvController extends Environment {
         view = new EnvView(model, this);
         model.setView(view);
         simulation = new Simulation(model);
+        addInitialBeliefs(obstacles, possibleVictims);
+    }
+    
+    public void addInitialBeliefs(Location[] obstacles, Location[] possibleVictims) {
+    	// add walls
+    	for (int w = 0; w <= model.getWidth() - 1; w++) {
+			addPercept(DOCTOR,Literal.parseLiteral("wall("+w+","+0+")"));
+			addPercept(DOCTOR,Literal.parseLiteral("wall("+w+","+(model.getHeight()-1)+")"));
+		}
+		for (int h = 0; h <= model.getHeight() - 1; h++) {
+			addPercept(DOCTOR,Literal.parseLiteral("wall("+0+","+h+")"));
+			addPercept(DOCTOR,Literal.parseLiteral("wall("+(model.getWidth()-1)+","+h+")"));
+		}
+		// add obstacles
+		for (Location loc : obstacles) {
+			addPercept(DOCTOR,Literal.parseLiteral("obstacle("+loc.x+","+loc.y+")"));
+		}
+		for (Location loc : possibleVictims) {
+			addPercept(DOCTOR,Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
+		}
     }
     
     public void initializeEnv() {
-    	logger.info(""+this.containsPercept(Literal.parseLiteral("man(tom)")));
+    	//
     }
     
     
@@ -134,8 +159,7 @@ public class EnvController extends Environment {
     	try {
     		Thread.sleep(DELAY);
     		if (action.equals(ADD_ALL)) {
-    			addAllPositions();
-    	    	logger.info(this.consultPercepts("scout").toString());
+    			addAllPositionsToPool();
     		} else if (action.equals(REMOVE_IMPOSSIBLE)) {
     			removeImpossiblePositions();
     		} else if (action.getFunctor().equals(EXECUTE)) {
@@ -148,23 +172,17 @@ public class EnvController extends Environment {
     			stop();
     		} else if (action.getFunctor().equals("move")) {
     			move(action.getTerm(0).toString());
-    		} else if (action.getFunctor().equals("process")) {
-    			processColor(action.getTerm(0).toString());
+    		} else if (action.equals(UPDATE_MODEL)) {
+    			updateModel();
     		} else if (action.equals(PLAN)) {
     			doPlan();
     		} else if (action.equals(INIT_ENV)){
-    			Thread.sleep(DELAY);
     			initializeEnv();
-    	    	logger.info(this.consultPercepts("scout").toString());
     		} else {
     			return false;
     		}
-        	this.addPossibleVictimBelief();
-        	if (model.locDetermined) {
-        		addPercept(model.getPosLiteral());
-        	}
         	if (thePath != null) {
-        		addPercept(Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
+        		addPercept(SCOUT,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
         	}
         } catch (Exception e) {
             e.printStackTrace();
@@ -221,7 +239,9 @@ public class EnvController extends Environment {
     	logger.info("execute" + action);
     	orderRobotToMove(action); // this line should be deleted
     	for (Position poss : model.possiblePosition) poss.relativeMove(action);
-    	this.clearAllPercepts();
+    	this.clearPercepts(SCOUT);
+    	//this.removePerceptsByUnif(Literal.parseLiteral("occupised(_)"));
+    	//this.removePerceptsByUnif(Literal.parseLiteral("color(_)"));
     }
     
     public void orderRobotToMove(int action) {
@@ -232,26 +252,27 @@ public class EnvController extends Environment {
         super.stop();
     }
    
-    public void addPossibleVictimBelief() {
-    	for (Location loc : model.victimsToVisit) {
-    		addPercept(Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
-    	}
-    }
     
-	void addAllPositions(){
+    void addAllPositionsToPool(){
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
 				if(!isOccupied(x,y)) {
 					model.possiblePosition.add(new Position(x,y,UP));
-					addPercept(Literal.parseLiteral("pos("+x+","+y+","+UP+")"));
+					addPercept(SCOUT, Literal.parseLiteral("pos("+x+","+y+","+UP+")"));
 					model.possiblePosition.add(new Position(x,y,DOWN));
-					addPercept(Literal.parseLiteral("pos("+x+","+y+","+DOWN+")"));
+					addPercept(SCOUT, Literal.parseLiteral("pos("+x+","+y+","+DOWN+")"));
 					model.possiblePosition.add(new Position(x,y,LEFT));
-					addPercept(Literal.parseLiteral("pos("+x+","+y+","+LEFT+")"));
+					addPercept(SCOUT, Literal.parseLiteral("pos("+x+","+y+","+LEFT+")"));
 					model.possiblePosition.add(new Position(x,y,RIGHT));
-					addPercept(Literal.parseLiteral("pos("+x+","+y+","+RIGHT+")"));
+					addPercept(SCOUT, Literal.parseLiteral("pos("+x+","+y+","+RIGHT+")"));
 				}
 			}
+		}
+	}
+    
+	void addAllPositionsToScout(){
+		for (Position pos : model.possiblePosition){
+			addPercept(pos.toLiteral());
 		}
 	}
 	
@@ -281,8 +302,8 @@ public class EnvController extends Environment {
 	}
     
     void updatePercepts() {
-    	clearPercepts();
-    	if (model.locDetermined) {
+    	//clearPercepts();
+    	if (this.containsPercept(DETERMINED_LOC)) {
     		Literal scoutPos = model.getPosLiteral();
     		addPercept(scoutPos);
     	}
@@ -325,7 +346,7 @@ public class EnvController extends Environment {
     void getEnvInfo() {
     	view.repaint();
     	// before localization finished
-    	if (!model.locDetermined) {
+    	if (!this.containsPercept(DETERMINED_LOC)) {
         	getColorFromRobot();
         	getOccpuiedInfoFromRobot();
     	} else {
@@ -337,10 +358,10 @@ public class EnvController extends Environment {
 	// !!! this method should be modified !!! £$%^&*())))(*&^%$£$%^&*(*&^%$%^&*
     void getOccpuiedInfoFromRobot() {
     	// this data should be from the robot
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(OCCUPIED_FRONT);
-		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(OCCUPIED_BACK);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(OCCUPIED_LEFT);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(OCCUPIED_RIGHT);
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
+		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
     }
     
     String getColorInBeliefBase() {
@@ -358,27 +379,51 @@ public class EnvController extends Environment {
     	String color = getColorInBeliefBase();
     	// remove impossible positiosn according to the occupancy information and the color of the grid
 		HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
-	   	for (Position pos: model.possiblePosition) {
-	   		if (containsPercept(OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
+		logger.info("real="+simulation.realPos.toString());
+		for (Position pos: model.possiblePosition) {
+	   		if (containsPercept(SCOUT,OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
+	   			if (pos.equals(simulation.realPos)) {
+		   			logger.info("contain"+containsPercept(OCCUPIED_FRONT));
+		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_FRONT));
+	   				logger.info("meila front");
+	   			}
+
 	   			clonePool.remove(pos);
 	   			continue;
 	   		} 
-	   		if (containsPercept(OCCUPIED_BACK) != isRelativeOccupied(pos, RELATIVE_BACK)) {
+	   		if (containsPercept(SCOUT,OCCUPIED_BACK) != isRelativeOccupied(pos, RELATIVE_BACK)) {
+	   			if (pos.equals(simulation.realPos)){
+	   				logger.info("contain"+containsPercept(OCCUPIED_BACK));
+		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_BACK));
+	   				logger.info("meila back");
+	   			}
 	   			clonePool.remove(pos);
+	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}  
-	   		if (containsPercept(OCCUPIED_LEFT) != isRelativeOccupied(pos, RELATIVE_LEFT)) {
+	   		if (containsPercept(SCOUT,OCCUPIED_LEFT) != isRelativeOccupied(pos, RELATIVE_LEFT)) {
+	   			if (pos.equals(simulation.realPos)){
+	   				logger.info("meila left");
+	   				logger.info("contain"+containsPercept(OCCUPIED_LEFT));
+		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_LEFT));
+	   			}
 	   			clonePool.remove(pos);
+	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}  
-	   		if (containsPercept(OCCUPIED_RIGHT) != isRelativeOccupied(pos, RELATIVE_RIGHT)) {
+	   		if (containsPercept(SCOUT,OCCUPIED_RIGHT) != isRelativeOccupied(pos, RELATIVE_RIGHT)) {
+	   			if (pos.equals(simulation.realPos))logger.info("meila right");
 	   			clonePool.remove(pos);
+	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}
 	   		if (!getColorAt(pos.getLoc()).equals(POSSIBLE) && !getColorAt(pos.getLoc()).equals(color)) {
+	   			if (pos.equals(simulation.realPos))logger.info("meila color");
 	   			clonePool.remove(pos);
+	   			this.removePercept(SCOUT, pos.toLiteral());
 				continue;
-			}
+			} 
+	   	
 	   	}
 	   	model.possiblePosition = clonePool;
 	   	//printAllPosition();
@@ -387,7 +432,6 @@ public class EnvController extends Environment {
     		Position pos = model.possiblePosition.toArray(new Position[1])[0];
     		model.setAgPos(SCOUT_ID, pos.getLoc());
     		model.heading = pos.getHeading();
-    		model.locDetermined = true;
     		addPercept(DETERMINED_LOC);
     	} else {
     		int bestAction = chooseAction();
@@ -397,29 +441,36 @@ public class EnvController extends Environment {
 			Thread.sleep(DELAY);
 		} catch (InterruptedException e) {
 		}
+    	logger.info("real="+simulation.realPos.toString());
+    	printAllPosition();
 		view.repaint();
     }
     
-    
-    public void processColor(String color) {
-    	model.remove(EnvModel.POTENTIAL_VICTIM, model.getLoc());
-    	if (color.equals(RED)) {
-    		model.add(EnvModel.RED_VICTIM, model.getLoc());
-    	}
-    	if (color.equals(BLUE)) model.add(EnvModel.BLUE_VICTIM, model.getLoc());
-    	if (color.equals(GREEN)) model.add(EnvModel.GREEN_VICTIM, model.getLoc());
-    	view.repaint();
-    	model.victimsToVisit.remove(model.getLoc());
-    	if (model.victimsToVisit.size() == 0) {
-    		addPercept(TASK_FINISHED);
-    	}
+    // need optimization
+    public void updateModel(){
+    	for(int w=0; w<=model.getWidth()-1; w++){
+    		for (int h=0; h<=model.getHeight()-1; h++){
+    			if (containsPercept(DOCTOR,Literal.parseLiteral("potentialVictim("+w+","+h+")"))) {
+    				model.set(EnvModel.POTENTIAL_VICTIM, w, h);
+    			} else if (containsPercept(DOCTOR,Literal.parseLiteral("red("+w+","+h+")"))){
+    				model.set(EnvModel.RED_VICTIM, w, h);
+    			} else if (containsPercept(DOCTOR,Literal.parseLiteral("green("+w+","+h+")"))) {
+    				model.set(EnvModel.GREEN_VICTIM, w, h);
+    			} else if (containsPercept(DOCTOR,Literal.parseLiteral("blue("+w+","+h+")"))) {
+    				model.set(EnvModel.BLUE_VICTIM, w, h);
+    			} else if (containsPercept(DOCTOR,Literal.parseLiteral("wall("+w+","+h+")"))){
+    				model.set(EnvModel.WALL, w, h);
+    			} else {
+    				model.set(EnvModel.CLEAN, w, h);
+    			}
+    		}
+    	} 
     	view.repaint();
     }
     
     public void getColorFromRobot() {
     	String color = simulation.getGridColor();
-    	addPercept(Literal.parseLiteral("color("+color+")"));
-    	logger.info("the color is " + color);
+    	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     }
     
     
@@ -494,14 +545,23 @@ public class EnvController extends Environment {
     int chooseAction() {
     	double[] resultsOfActions = new double[4];
     	// for invalid actions, the results are -1
-    	resultsOfActions[RELATIVE_FRONT] = containsPercept(OCCUPIED_FRONT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_FRONT);
-    	resultsOfActions[RELATIVE_BACK] = containsPercept(OCCUPIED_BACK) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_BACK);
-    	resultsOfActions[RELATIVE_LEFT] = containsPercept(OCCUPIED_LEFT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_LEFT);
-    	resultsOfActions[RELATIVE_RIGHT] = containsPercept(OCCUPIED_RIGHT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_RIGHT);
+    	resultsOfActions[RELATIVE_FRONT] = containsPercept(SCOUT,OCCUPIED_FRONT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_FRONT);
+    	resultsOfActions[RELATIVE_BACK] = containsPercept(SCOUT,OCCUPIED_BACK) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_BACK);
+    	resultsOfActions[RELATIVE_LEFT] = containsPercept(SCOUT,OCCUPIED_LEFT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_LEFT);
+    	resultsOfActions[RELATIVE_RIGHT] = containsPercept(SCOUT,OCCUPIED_RIGHT) ? -1 : howThisActionCanDistinguish(model.possiblePosition, RELATIVE_RIGHT);
     	// simply pick the one with the maximum value
     	int action = 0;
+    	// requrie strategy to break tie because it there's a tie, the robot may 
+    	// end up in an infinite loop
+    	// therefore, we need some randomity for ties
     	for (int i=0; i<=3; i++){
-    		if (resultsOfActions[i] >= resultsOfActions[action]) action = i;
+    		if (resultsOfActions[i] > resultsOfActions[action]) {
+    			action = i;
+    		} else if (resultsOfActions[i] == resultsOfActions[action]) {
+    			if (new Random().nextFloat() > 0.5) {
+    				action = i;
+    			}
+    		}
     	}
     	return action;
     }
@@ -545,9 +605,11 @@ public class EnvController extends Environment {
     		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
     		realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
+    		/*
     		logger.info("First real victim = "+list.get(0));
     		logger.info("Second real victim = "+list.get(1));
     		logger.info("Third real victim = "+list.get(2));
+    		*/
     		realPos = new Position(5, 1, "down");
     		// generate random heading
     		List<String> headingList = Arrays.asList(new String[]{LEFT,RIGHT,UP,DOWN});
@@ -594,16 +656,12 @@ public class EnvController extends Environment {
     	// rFront[0], rBack[1], rLeft[2], rRight[3]
     	
     	public String getGridColor() {
-    		if (model.locDetermined) realPos = model.getPosition();
-    		System.out.print(realPos.toString());
+    		if (containsPercept(DETERMINED_LOC)) realPos = model.getPosition();
     		if (realPos.getLoc().equals(realVictims[0])) {
-    			logger.info("give red");
     			return RED;
     		} else if (realPos.getLoc().equals(realVictims[1])) {
-    			logger.info("give blue");
     			return BLUE;
     		} else if (realPos.getLoc().equals(realVictims[2])){
-    			logger.info("give green");
     			return GREEN;
     		} else {
     			return WHITE;

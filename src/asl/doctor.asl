@@ -8,4 +8,9 @@
 
 /* Plans */
 
-+!start : true <- .print("hello world.").
++!start : true <- 
+	.print("I started to work."); 
+	.print("I told scout to start working.");
+	.send(scout,achieve,start).
+
++X[source(scout)] <- +X.
