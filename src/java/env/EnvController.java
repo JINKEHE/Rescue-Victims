@@ -24,7 +24,7 @@ public class EnvController extends Environment {
 	private static final int RELATIVE_RIGHT = 3;
 	
 	private static final String SCOUT = "scout";
-	//private static final String DOCTOR = "doctor";
+	private static final String DOCTOR = "doctor";
 	
 	private static final int W_GRID = 7 + 2;
 	private static final int H_GRID = 6 + 2;
@@ -67,7 +67,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 500;
+    private static final int DELAY = 300;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -166,7 +166,6 @@ public class EnvController extends Environment {
     		} else if (action.getFunctor().equals(EXECUTE)) {
         		Thread.sleep(DELAY);
     			execute(action.getTerm(0).toString());
-
     		} else if (action.equals(DETECT_ENV)) {
     			getEnvInfo();
     		} else if (action.equals(STOP)) {
@@ -177,17 +176,13 @@ public class EnvController extends Environment {
     		} else if (action.getFunctor().equals("updateModel")) {
     			updateModel(action.getTerm(0).toString(), action.getTerm(1).toString(), action.getTerm(2).toString());
     		} else if (action.equals(PLAN)) {
+    			logger.info("OK");
     			doPlan();
-    		} else if (action.getFunctor().equals("addWall")) {
-        		model.set(EnvModel.WALL, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
-        	} else if (action.getFunctor().equals("addObstacle")) {
-        		model.set(EnvModel.OBSTACLE, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
+    		} else if (action.getFunctor().equals("addObject")) {
+        		model.set(Integer.valueOf(action.getTerm(0).toString()), Integer.valueOf(action.getTerm(1).toString()),Integer.valueOf(action.getTerm(2).toString()));
         	} else {
     			return false;
     		}
-        	if (thePath != null && thePath.size() != 0) {
-        		addPercept(SCOUT,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
-        	}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -196,7 +191,10 @@ public class EnvController extends Environment {
 
     
     public void doPlan() {
+    	logger.info("plan should not be empty");
     	thePath = convertToExecutablePlan(model.findOrderOfVictimsToVisit(model.getLoc()));
+    	this.offerBestMove();
+    	logger.info("in do plan"+thePath.size());
     }
     
     public ArrayList<String> convertToExecutablePlan(Location[] orderToVisit) {
@@ -234,6 +232,7 @@ public class EnvController extends Environment {
 				continue;
 			}
     	}
+    	logger.info("real plan size"+thePlan.size());
     	return thePlan;
     }
     
@@ -244,6 +243,7 @@ public class EnvController extends Environment {
     	orderRobotToMove(action); // this line should be deleted
     	for (Position poss : model.possiblePosition) poss.relativeMove(action);
     	this.updatePercepts();
+
     	//this.clearPercepts(SCOUT);
     	//this.removePerceptsByUnif(Literal.parseLiteral("occupised(_)"));
     	//this.removePerceptsByUnif(Literal.parseLiteral("color(_)"));
@@ -308,13 +308,17 @@ public class EnvController extends Environment {
     
     void updatePercepts() {
     	this.clearPercepts(SCOUT);
-    	if (thePath != null && thePath.size() != 0) {
-    		addPercept(SCOUT,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
-    	}
     	addAllPositionsToScout();
+    	offerBestMove();
     }
     
-
+    void offerBestMove() {
+    	logger.info("not null?"+(thePath!=null));
+    	if (thePath != null && thePath.size() != 0) {
+    		logger.info("offered");
+    		addPercept(DOCTOR,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
+    	}
+    }
     
 
     
@@ -342,9 +346,8 @@ public class EnvController extends Environment {
         model.heading = direction;
         thePath.remove(0);
         this.clearPercepts(SCOUT);
-    	if (thePath != null && thePath.size() != 0) {
-    		addPercept(SCOUT,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
-    	}
+        this.clearPercepts(DOCTOR);
+    	offerBestMove();
     	this.addPercept(SCOUT, model.getPosition().toLiteral());
     }
     
@@ -437,7 +440,7 @@ public class EnvController extends Environment {
 	   			this.removePercept(SCOUT, pos.toLiteral());
 				continue;
 			} 
-	   	
+	   		this.printAllPosition();
 	   	}
 	   	model.possiblePosition = clonePool;
 	   	//printAllPosition();

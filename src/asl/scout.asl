@@ -38,6 +38,9 @@
  *        
  */
 
+x(0).
+y(0).
+
 /* start of initial beliefs here */
 
 /* end of initial beliefs here */
@@ -45,12 +48,12 @@
 // Communication
 
 
-
++task(finished): .print("nice! doctor asked me to stop working.").
 
 +!start : true 
 	<- 
-	.send(doctor,tell,red(fuck));
 	.print("Doctor told me to get started."); 
+	.print("try to add all posible positiosn to the belief base");
 	add(all);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
@@ -61,8 +64,15 @@
 	remove(impossible);
 	!check(localization).
 
+
 +!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
 +!check(localization).
+
++!do(localization) : determined(location) 
+	<- .print("Now I know where I am. Localization finished."); 
+	plan(path);
+	.send(doctor, tell, determined(location)); 
+	!do(task).
 
 +!do(localization) : not determined(location) 
 	<- ?bestAction(X); 
@@ -70,51 +80,47 @@
 	!scan(around); 
 	!do(localization).
 
-+!do(localization) : determined(location) 
-	<- .print("Now I know where I am. Localization finished."); 
-	plan(path); 
-	!do(task).
 
-+!do(localization) <- .print("GG").
 
 +!do(task): pos(X,Y,Z)
 	<-.send(doctor,askOne,potentialVictim(X,Y),Reply);
-	.print(Reply);
-	if (Reply=potentialVictim(X,Y)[source(doctor)]){
+	if (not Reply=false){
 		detect(env); 
-		?color(Color); 
-		!found(Color); 
-		-potentialVictim(X,Y);
-		updateModel(Color,X,Y);
+		.print("started to test color");
+		?color(C);
+		.print("finished to test color");
+		!found(C,X,Y); 
+		updateModel(C,X,Y);
 	} 
-	!reschedule(plan).
+	!check(mission).
+	
++!check(mission): task(finished) <- !check(mission).
++!check(mission): not task(finished) <- .send(doctor,askOne,bestMove(X),bestMove(X)); move(X); -bestMove(X); !do(task).
 
-+!found(blue): true 
-	<- ?pos(X,Y,_); 
++!found(blue,X,Y): true 
+	<- 
 	.send(doctor,tell,blue(X,Y)); 
 	.print("Serious victim found.").
 
-+!found(red): true 
-	<- ?pos(X,Y,_); 
-	.send(doctor,tell,red(X,Y)); 
++!found(red,X,Y): true 
+	<-.send(doctor,tell,red(X,Y)); 
 	.print("Criticial victim found").
 
-+!found(green): true 
-	<- ?pos(X,Y,_); 
-	.send(doctor,tell,green(X,Y)); 
++!found(green,X,Y): true 
+	<-.send(doctor,tell,green(X,Y)); 
 	.print("Minor victim found").
 
-+!found(white): true 
-	<- ?pos(X,Y,_); 
-	.print("No victim here.").
++!found(white,X,Y): true 
+	<-.send(doctor,tell,white(X,Y)); 
+	.print("No victim here.",X,",",Y).
 
-+!reschedule(plan): red(_,_) & blue(_,_) & green(_,_) 
-	<- -potentialVictim(_,_); 
-	stop(everything).
+/* 
++!reschedule(plan): task(finished)
+	<- !reschedule(plan).
 
 +!reschedule(plan): true 
 	<- ?bestMove(X); 
 	move(X); 
 	!do(task).
-
+*/
 
