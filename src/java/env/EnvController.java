@@ -67,7 +67,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 300;
+    private static final int DELAY = 500;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -156,29 +156,33 @@ public class EnvController extends Environment {
     // getFunctor -> move
     // getTerm(0) -> down
     public boolean executeAction(String agName, Structure action) {
+    	
     	try {
-    		Thread.sleep(DELAY);
     		if (action.equals(ADD_ALL)) {
     			addAllPositionsToPool();
     		} else if (action.equals(REMOVE_IMPOSSIBLE)) {
+    			Thread.sleep(DELAY);
     			removeImpossiblePositions();
     		} else if (action.getFunctor().equals(EXECUTE)) {
+        		Thread.sleep(DELAY);
     			execute(action.getTerm(0).toString());
+
     		} else if (action.equals(DETECT_ENV)) {
     			getEnvInfo();
     		} else if (action.equals(STOP)) {
     			stop();
     		} else if (action.getFunctor().equals("move")) {
+        		Thread.sleep(DELAY);
     			move(action.getTerm(0).toString());
     		} else if (action.getFunctor().equals("updateModel")) {
     			updateModel(action.getTerm(0).toString(), action.getTerm(1).toString(), action.getTerm(2).toString());
     		} else if (action.equals(PLAN)) {
     			doPlan();
     		} else if (action.getFunctor().equals("addWall")) {
-    			model.set(EnvModel.WALL, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
-    		} else if (action.getFunctor().equals("addObstacle")) {
-    			model.set(EnvModel.OBSTACLE, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
-    		} else {
+        		model.set(EnvModel.WALL, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
+        	} else if (action.getFunctor().equals("addObstacle")) {
+        		model.set(EnvModel.OBSTACLE, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
+        	} else {
     			return false;
     		}
         	if (thePath != null && thePath.size() != 0) {
