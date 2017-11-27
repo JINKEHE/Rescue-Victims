@@ -24,7 +24,7 @@ public class EnvController extends Environment {
 	private static final int RELATIVE_RIGHT = 3;
 	
 	private static final String SCOUT = "scout";
-	private static final String DOCTOR = "doctor";
+	//private static final String DOCTOR = "doctor";
 	
 	private static final int W_GRID = 7 + 2;
 	private static final int H_GRID = 6 + 2;
@@ -97,9 +97,10 @@ public class EnvController extends Environment {
         view = new EnvView(model, this);
         model.setView(view);
         simulation = new Simulation(model);
-        addInitialBeliefs(obstacles, possibleVictims);
+        
     }
-    
+  //addInitialBeliefs(obstacles, possibleVictims);
+    /*
     public void addInitialBeliefs(Location[] obstacles, Location[] possibleVictims) {
     	// add walls
     	for (int w = 0; w <= model.getWidth() - 1; w++) {
@@ -112,17 +113,18 @@ public class EnvController extends Environment {
 		}
 		// add obstacles
 		for (Location loc : obstacles) {
-			addPercept(DOCTOR,Literal.parseLiteral("obstacle("+loc.x+","+loc.y+")"));
+			//addPercept(DOCTOR,Literal.parseLiteral("obstacle("+loc.x+","+loc.y+")"));
 		}
 		for (Location loc : possibleVictims) {
 			addPercept(DOCTOR,Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
 			addPercept(SCOUT,Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
 		}
     }
-    
+    */
+    /*
     public void initializeEnv() {
     	//
-    }
+    }*/
     
     
     /*       the list of internal actions      
@@ -172,8 +174,10 @@ public class EnvController extends Environment {
     			updateModel(action.getTerm(0).toString(), action.getTerm(1).toString(), action.getTerm(2).toString());
     		} else if (action.equals(PLAN)) {
     			doPlan();
-    		} else if (action.equals(INIT_ENV)){
-    			initializeEnv();
+    		} else if (action.getFunctor().equals("addWall")) {
+    			model.set(EnvModel.WALL, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
+    		} else if (action.getFunctor().equals("addObstacle")) {
+    			model.set(EnvModel.OBSTACLE, Integer.valueOf(action.getTerm(0).toString()),Integer.valueOf(action.getTerm(1).toString()));
     		} else {
     			return false;
     		}

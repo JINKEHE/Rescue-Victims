@@ -14,19 +14,27 @@ obstacle(2,1).
 obstacle(2,3).
 obstacle(3,3).
 obstacle(3,4).
-
+potentialVictim(2,2).
+potentialVictim(5,6).
+potentialVictim(4,4).
+potentialVictim(2,5).
+potentialVictim(1,4).
 
 !start.
 
++wall(X,Y) <- addWall(X,Y).
++obstacle(X,Y) <- addObstacle(X,Y).
+
+
 +!init(wall): true
 	<- 
-	while(x(X) & width(W) & X<W-1) {
+	while(x(X) & width(W) & X<=W-1) {
 		?height(H); 
     	+wall(X,0);
     	+wall(X,H-1);
 		-+x(X+1);
 	};
-	while(y(Y) & height(H) & Y<H-1){
+	while(y(Y) & height(H) & Y<=H-1){
 		?width(W);
     	+wall(0,Y);
     	+wall(W-1,Y);

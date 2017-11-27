@@ -37,7 +37,7 @@ public class EnvModel extends GridWorldModel {
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
 	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims) {
 		super(W_GRID, H_GRID, 1);
-		addObstacles(setOfObstacles);
+		//addObstacles(setOfObstacles);
 		addPossibleVictims(setOfPossibleVictims);
 		victimsToVisit = setOfPossibleVictims;
 		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();

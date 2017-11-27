@@ -51,7 +51,7 @@
 	<- 
 	.send(doctor,tell,red(fuck));
 	.print("Doctor told me to get started."); 
-	!add(all);
+	add(all);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
 	!do(localization).
