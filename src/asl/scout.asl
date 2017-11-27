@@ -5,7 +5,6 @@
 /* Initial goals */
 
 
-
 /* internal actions */
 
 
@@ -41,14 +40,18 @@
 
 /* start of initial beliefs here */
 
-
 /* end of initial beliefs here */
 
 // Communication
 
+
+
+
 +!start : true 
-	<- .print("Doctor told me to get started."); 
-	add(all);
+	<- 
+	.send(doctor,tell,red(fuck));
+	.print("Doctor told me to get started."); 
+	!add(all);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
 	!do(localization).
@@ -74,12 +77,16 @@
 
 +!do(localization) <- .print("GG").
 
-+!do(task): pos(X,Y,Z) & potentialVictim(X,Y) 
-	<- detect(env); 
-	?color(Color); 
-	!found(Color); 
-	-potentialVictim(X,Y)
-	update(model);
++!do(task): pos(X,Y,Z)
+	<-.send(doctor,askOne,potentialVictim(X,Y),Reply);
+	.print(Reply);
+	if (Reply=potentialVictim(X,Y)[source(doctor)]){
+		detect(env); 
+		?color(Color); 
+		!found(Color); 
+		-potentialVictim(X,Y);
+		updateModel(Color,X,Y);
+	} 
 	!reschedule(plan).
 
 +!found(blue): true 
@@ -100,11 +107,6 @@
 +!found(white): true 
 	<- ?pos(X,Y,_); 
 	.print("No victim here.").
-
-+!do(task): pos(X,Y,Z) & not potentialVictim(X,Y) 
-	<- ?bestMove(M); 
-	move(M); 
-	!do(task).
 
 +!reschedule(plan): red(_,_) & blue(_,_) & green(_,_) 
 	<- -potentialVictim(_,_); 

@@ -35,7 +35,7 @@ public class EnvModel extends GridWorldModel {
 	
     
 	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
-	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims, boolean addWalls) {
+	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims) {
 		super(W_GRID, H_GRID, 1);
 		addObstacles(setOfObstacles);
 		addPossibleVictims(setOfPossibleVictims);
@@ -43,16 +43,8 @@ public class EnvModel extends GridWorldModel {
 		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();
 		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
 		computeCosts();
-		if (addWalls) {
-			addWalls();
-		}
 		this.setAgPos(SCOUT_ID, 0,0);
 	}
-	
-	
-
-	
-	
 	
 	// this method should only be called when the location is determined
 	public Location getLoc(){
@@ -302,7 +294,7 @@ public class EnvModel extends GridWorldModel {
 		Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6)}; 
 		Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
 		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
-		EnvModel envModel = new EnvModel(9, 8, obstaclesSet, possibleVictimsSet, true);
+		EnvModel envModel = new EnvModel(9, 8, obstaclesSet, possibleVictimsSet);
 		envModel.visualize(); 
 		System.out.println(locArrayToStr(envModel.findOrderOfVictimsToVisit(new Location(4,6))));
 		Position a = new Position(1,1,"up");
