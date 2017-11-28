@@ -13,6 +13,7 @@ public class Position {
 	private int x;
 	private int y;
 	private String heading;
+	private Position parentPos;
 	
 	public Position(int x, int y, String heading) {
 		super();
@@ -21,6 +22,16 @@ public class Position {
 		this.heading = heading;
 	}
 
+	public Position(int x, int y, String heading, Position parentPos) {
+		this.parentPos = parentPos;
+	}
+	
+	
+	
+	public Position getFather() {
+		return this.parentPos;
+	}
+	
 	public int getX() {
 		return x;
 	}
