@@ -180,6 +180,8 @@ public class EnvController extends Environment {
     			doPlan();
     		} else if (action.getFunctor().equals("addObject")) {
         		model.set(Integer.valueOf(action.getTerm(0).toString()), Integer.valueOf(action.getTerm(1).toString()),Integer.valueOf(action.getTerm(2).toString()));
+        	} else if (action.getFunctor().equals("askOccupied()")) {
+        		
         	} else {
     			return false;
     		}
@@ -189,6 +191,15 @@ public class EnvController extends Environment {
         return true;
     }
 
+    public void addOccupiedPercepts(String xInput, String yInput, String heading, String rHeadingInput) {
+    	int x = Integer.valueOf(xInput);
+    	int y = Integer.valueOf(yInput);
+    	int rHeading = Integer.valueOf(rHeadingInput);
+    	Position pos = new Position(x,y,heading);
+    	if (this.isRelativeOccupied(pos, rHeading)) {
+    		this.addPercept(Literal.parseLiteral("occupied("+xInput+","+yInput+","+heading+","+rHeadingInput+")"));
+    	}
+    }
     
     public void doPlan() {
     	logger.info("plan should not be empty");

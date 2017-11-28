@@ -74,13 +74,14 @@ y(0).
 	.print("Doctor told me to get started."); 
 	.print("try to add all posible positiosn to the belief base");
 	!init(wall);
-	.wait(5000);
+	//.wait(5000);
 	//.findall(wall(A,),wall(A,B),L)
 	//.count(L,ZZ)
 	//.print("wall length",ZZ)
-	//add(all);
+	add(all);
 	//.wait({+initEnv(finished)[source(doctor)]});
-	!addAll(possiblePos);
+	//!addAll(possiblePos);
+	!remove(impossible);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
 	!do(localization).
@@ -110,9 +111,17 @@ if (not wall(X,Y) & not obstacle(X,Y)){
 
 +!scan(around): true
 	<- detect(env);
+	!remove(impossible);
 	remove(impossible);
 	!check(localization).
 
++!remove(impossible)
+<-
+.findall(pos(X,Y,Heading),pos(X,Y,Heading),ListOfPos);
+.print(ListOfPos);
+for (.member(pos(X,Y,Heading),ListOfPos)) {
+	
+}.
 
 +!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
 +!check(localization).
