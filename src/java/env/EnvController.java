@@ -2,6 +2,14 @@ package env;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,12 +90,22 @@ public class EnvController extends Environment {
 
     
     private ArrayList<String> thePath;
-    
+    private ServerSocket sersock;
+    Socket sock;                      
+    BufferedReader keyRead ;
+	                      
+    OutputStream ostream;
+    PrintWriter pwrite;
+
+                          
+    InputStream istream;
+    BufferedReader receiveRead;
     
 
     public void init(String[] args) {
     	
     	// add initial beliefs here in the demo
+    	this.buildSock();
     	Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3), new Location(3,3), new Location(3,4)};
     	Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6),new Location(4,4),new Location(2,5), new Location(1,4)}; 
     	Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
@@ -142,7 +160,22 @@ public class EnvController extends Environment {
      *   
      *   
      * */
-    
+	public String sendCommand(String command) {
+		
+		// send command to the robot via socket
+		// until the robot gives back the result
+		// while(){}
+		// return result
+		this.pwrite.println(command);
+		String reply="GG";
+		try {
+			reply = this.receiveRead.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return reply;
+	}
     
     
     
@@ -155,6 +188,36 @@ public class EnvController extends Environment {
     // for example, an action move(down)
     // getFunctor -> move
     // getTerm(0) -> down
+    public void buildSock() {
+    		System.out.println("Server ready to send command");
+    		try {
+				sersock = new ServerSocket(8888);
+				sock = sersock.accept();
+				keyRead = new BufferedReader(new InputStreamReader(System.in));
+				ostream = sock.getOutputStream(); 
+				pwrite = new PrintWriter(ostream, true);
+				istream = sock.getInputStream();
+				receiveRead = new BufferedReader(new InputStreamReader(istream));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		
+    }
+    
+    public void closeSock() {
+    		try {
+    				receiveRead.close();
+    				istream.close();
+    				pwrite.close();
+    				ostream.close();
+    				keyRead.close();
+    				sock.close();
+				sersock.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    }
     public boolean executeAction(String agName, Structure action) {
     	
     	try {
@@ -181,7 +244,9 @@ public class EnvController extends Environment {
     		} else if (action.getFunctor().equals("addObject")) {
         		model.set(Integer.valueOf(action.getTerm(0).toString()), Integer.valueOf(action.getTerm(1).toString()),Integer.valueOf(action.getTerm(2).toString()));
         	} else if (action.getFunctor().equals("askOccupied()")) {
-        		
+        	
+        	} else if (action.equals(Literal.parseLiteral("test(com)"))) {
+        		this.sendCommand("jeff's success");
         	} else {
     			return false;
     		}
@@ -377,7 +442,7 @@ public class EnvController extends Environment {
     	view.repaint();
     }
     
-	// !!! this method should be modified !!! £$%^&*())))(*&^%$£$%^&*(*&^%$%^&*
+	// !!! this method should be modified !!! ï¿½$%^&*())))(*&^%$ï¿½$%^&*(*&^%$%^&*
     void getOccpuiedInfoFromRobot() {
     	// this data should be from the robot
 	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
@@ -734,13 +799,7 @@ public class EnvController extends Environment {
 		}
     	
 
-    	public String sendCommand(String command) {
-    		// send command to the robot via socket
-    		// until the robot gives back the result
-    		// while(){}
-    		// return result
-    		return "haha";
-    	}
+
     	
     	// rFront[0], rBack[1], rLeft[2], rRight[3]
     	

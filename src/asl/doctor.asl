@@ -51,6 +51,7 @@ objectValue(potentialVictim,32).
 /* Plans */
 
 +!start : true <- 
+	test(com);
 	!init(wall);
 	!tell(scout,env);
 	.print("I started to work."); 
