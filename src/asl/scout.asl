@@ -145,6 +145,7 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 	if (not Reply=false){
 		detect(env); 
 		.print("started to test color");
+		.wait(1000);
 		?color(C);
 		.print("finished to test color");
 		!found(C,X,Y); 

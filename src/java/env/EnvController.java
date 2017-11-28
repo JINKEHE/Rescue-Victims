@@ -734,7 +734,13 @@ public class EnvController extends Environment {
 		}
     	
 
-    	
+    	public String sendCommand(String command) {
+    		// send command to the robot via socket
+    		// until the robot gives back the result
+    		// while(){}
+    		// return result
+    		return "haha";
+    	}
     	
     	// rFront[0], rBack[1], rLeft[2], rRight[3]
     	
