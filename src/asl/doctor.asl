@@ -78,6 +78,7 @@ objectValue(potentialVictim,32).
 
 +!check(task): red(_,_) & blue(_,_) & green(_,_) 
 	<- +task(finished);
+	-potentialVictim(_,_);
 	.send(scout,tell,task(finished)).
 +!check(task).
 
