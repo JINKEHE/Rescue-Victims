@@ -1,4 +1,4 @@
-package env;
+package src.java.env;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.net.UnknownHostException;
 public class test {
 	
 		private static final String IP = "localhost";
-		private static final int port = 8888;
+		private static final int port = 18888;
 		
 		private static Socket sock;
 		private static OutputStream oStream;

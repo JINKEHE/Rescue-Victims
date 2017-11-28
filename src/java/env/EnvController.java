@@ -191,7 +191,7 @@ public class EnvController extends Environment {
     public void buildSock() {
     		System.out.println("Server ready to send command");
     		try {
-				sersock = new ServerSocket(8888);
+				sersock = new ServerSocket(18888);
 				sock = sersock.accept();
 				keyRead = new BufferedReader(new InputStreamReader(System.in));
 				ostream = sock.getOutputStream(); 
@@ -228,7 +228,7 @@ public class EnvController extends Environment {
     			removeImpossiblePositions();
     		} else if (action.getFunctor().equals(EXECUTE)) {
         		Thread.sleep(DELAY);
-    			execute(action.getTerm(0).toString());
+    			moveBeforeLocalization(action.getTerm(0).toString());
     		} else if (action.equals(DETECT_ENV)) {
     			getEnvInfo();
     		} else if (action.equals(STOP)) {
@@ -313,7 +313,7 @@ public class EnvController extends Environment {
     }
     
     
-    public void execute(String actionStr) {
+    public void moveBeforeLocalization(String actionStr) {
     	int action = Integer.valueOf(actionStr);
     	logger.info("execute" + action);
     	orderRobotToMove(action); // this line should be deleted
