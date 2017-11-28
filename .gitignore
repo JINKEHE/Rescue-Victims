@@ -22,3 +22,7 @@
 hs_err_pid*
 
 .classpath
+
+bin/optmistor.xml
+
+.classpath
