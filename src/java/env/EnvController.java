@@ -244,7 +244,9 @@ public class EnvController extends Environment {
     		} else if (action.getFunctor().equals("addObject")) {
         		model.set(Integer.valueOf(action.getTerm(0).toString()), Integer.valueOf(action.getTerm(1).toString()),Integer.valueOf(action.getTerm(2).toString()));
         	} else if (action.getFunctor().equals("askOccupied()")) {
-        		
+        	
+        	} else if (action.equals(Literal.parseLiteral("test(com)"))) {
+        		this.sendCommand("jeff's success");
         	} else {
     			return false;
     		}

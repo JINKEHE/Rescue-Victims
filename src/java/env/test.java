@@ -39,6 +39,7 @@ public class test {
 			while(true){
 				try {
 					System.out.println(recieveRead.readLine());
+					pWrite.println("caonima");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
