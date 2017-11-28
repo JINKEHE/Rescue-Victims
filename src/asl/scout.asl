@@ -50,14 +50,63 @@ y(0).
 
 +task(finished): .print("nice! doctor asked me to stop working.").
 
+
++!init(wall): true
+	<- 
+	while(x(X) & width(W) & X<=W-1) {
+		?height(H); 
+    	+wall(X,0);
+    	+wall(X,H-1);
+		-+x(X+1);
+	};
+	while(y(Y) & height(H) & Y<=H-1){
+		?width(W);
+    	+wall(0,Y);
+    	+wall(W-1,Y);
+		-+y(Y+1);
+	};
+	-+x(0);
+	-+y(0);
+	+addWall(finished).
+
 +!start : true 
 	<- 
 	.print("Doctor told me to get started."); 
 	.print("try to add all posible positiosn to the belief base");
-	add(all);
+	!init(wall);
+	.wait(5000);
+	//.findall(wall(A,),wall(A,B),L)
+	//.count(L,ZZ)
+	//.print("wall length",ZZ)
+	//add(all);
+	//.wait({+initEnv(finished)[source(doctor)]});
+	!addAll(possiblePos);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
 	!do(localization).
+
++!addAll(possiblePos) <- 
+	while(x(X) & width(W) & not X=W) {
+		-+y(0);
+		!addY(X);
+		-+x(X+1);
+	};
+	.count(pos(_,_,_),Z);
+	.print(Z).
+
++!addY(X) <-
+	while(y(Y) & height(H) & not Y=H) {
+		!addPos(X,Y);
+		-+y(Y+1);
+	}.
+
++!addPos(X,Y) <-
+if (not wall(X,Y) & not obstacle(X,Y)){
+	+pos(X,Y,up);
+	+pos(X,Y,down);
+	+pos(X,Y,left);
+	+pos(X,Y,right);	
+}.
 
 +!scan(around): true
 	<- detect(env);

@@ -440,7 +440,7 @@ public class EnvController extends Environment {
 	   			this.removePercept(SCOUT, pos.toLiteral());
 				continue;
 			} 
-	   		this.printAllPosition();
+	   		//this.printAllPosition();
 	   	}
 	   	model.possiblePosition = clonePool;
 	   	//printAllPosition();

@@ -43,7 +43,8 @@ objectValue(potentialVictim,32).
     	+wall(0,Y);
     	+wall(W-1,Y);
 		-+y(Y+1);
-	}.
+	};
+	+addWall(finished).
 
 +bestMove(X) <- .send(scout,tell,bestMove(X)).
 
@@ -51,9 +52,24 @@ objectValue(potentialVictim,32).
 
 +!start : true <- 
 	!init(wall);
+	!tell(scout,env);
 	.print("I started to work."); 
 	.print("I told scout to start working.");
 	.send(scout,achieve,start).
+
++!tell(Who,env): true
+	<- 
+	?width(X);
+    ?height(Y);
+    .send(Who,tell,width(X));
+    .send(Who,tell,height(Y));
+	//.findall(wall(I,O),wall(I,O),ListOfWall);
+	//.send(Who,tell,ListOfWall);
+	.findall(obstacle(A,B),obstacle(A,B),ListOfObstacle);
+	.send(Who,tell,ListOfObstacle);
+	.send(Who,tell,initEnv(finished)).
+
+				          
 
 +red(X,Y) <- -potentialVictim(X,Y); !check(task).
 +green(X,Y) <- -potentialVictim(X,Y); !check(task).
