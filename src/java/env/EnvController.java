@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jason.asSyntax.Literal;
@@ -75,7 +76,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 700;
+    private static final int DELAY = 500;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -114,6 +115,7 @@ public class EnvController extends Environment {
         view = new EnvView(model, this);
         model.setView(view);
         //simulation = new Simulation(model);
+        logger.setLevel(Level.WARNING);
         
     }
   //addInitialBeliefs(obstacles, possibleVictims);
@@ -238,7 +240,8 @@ public class EnvController extends Environment {
     			move(action.getTerm(0).toString());
     		} else if (action.getFunctor().equals("updateModel")) {
     			updateModel(action.getTerm(0).toString(), action.getTerm(1).toString(), action.getTerm(2).toString());
-    		} else if (action.equals(PLAN)) {
+    		} else if (action.getFunctor().equals("plan")) {
+    			model.victimsToVisit = this.strToLocSet(action.getTerm(0).toString());
     			logger.info("OK");
     			doPlan();
     		} else if (action.getFunctor().equals("addObject")) {
@@ -250,7 +253,9 @@ public class EnvController extends Environment {
         		this.sendCommand("jeff's success");
         	} else if (action.equals(Literal.parseLiteral("run(simulation)"))){
         		simulation = new Simulation(model);
-        	} else {
+        	} else if (action.equals(Literal.parseLiteral("get(nextMove)"))){
+    			this.offerBfestMove();
+    		} else {
     			return false;
     		}
         } catch (Exception e) {
@@ -259,6 +264,37 @@ public class EnvController extends Environment {
         return true;
     }
 
+    // convert a Sttring in the foramt of "[A(X1,Y1),B(X2,Y2),C(X3,Y3),...]" to a Location Set
+    public HashSet<Location> strToLocSet(String str) {
+    	String[] temp = str.split(",");
+    	HashSet<Location> list = new HashSet<Location>();
+    	int xTemp = 0;
+    	int yTemp = 0;
+    	for (int i=0; i<=temp.length-1; i++) {
+    		String s = temp[i];
+    		ArrayList<Character> digits = new ArrayList<Character>();
+    		for (char c : s.toCharArray()) {
+    			if (Character.isDigit(c) && c!='[' && c!=']') {
+    				digits.add(c);
+    			}
+    		}
+    		StringBuilder builder = new StringBuilder(digits.size());
+    		for (Character c: digits) {
+    			builder.append(c);
+    		}
+    		s = builder.toString();
+    		//System.out.println(s);
+    		if (i%2==0) xTemp = Integer.valueOf(s);
+    		if (i%2!=0) {
+    			yTemp = Integer.valueOf(s);
+    			list.add(new Location(xTemp, yTemp));
+    		}
+    	}
+    	//System.out.println(list.toString());
+    	//ArrayList<int> indexOfComma = new ArrayList<int>();
+    	return list;
+    }
+    
     public void addOccupiedPercepts(String xInput, String yInput, String heading, String rHeadingInput) {
     	int x = Integer.valueOf(xInput);
     	int y = Integer.valueOf(yInput);
@@ -272,7 +308,6 @@ public class EnvController extends Environment {
     public void doPlan() {
     	logger.info("plan should not be empty");
     	thePath = convertToExecutablePlan(model.findOrderOfVictimsToVisit(model.getLoc()));
-    	this.offerBestMove();
     	logger.info("in do plan"+thePath.size());
     }
     
@@ -281,11 +316,17 @@ public class EnvController extends Environment {
     	ArrayList<Location> gridsToPass = new ArrayList<Location>();
     	Location loc = model.getLoc();
     	gridsToPass.add(loc);
+    	for (int i=0; i<=orderToVisit.length-1; i++){
+    		gridsToPass.addAll(model.aStarPathFinding(loc, orderToVisit[i]));
+    		loc = orderToVisit[i];
+    	}
+    	/*
     	gridsToPass.addAll(model.aStarPathFinding(model.getLoc(), orderToVisit[0]));
     	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[0], orderToVisit[1]));
     	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[1], orderToVisit[2]));
     	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[2], orderToVisit[3]));
     	gridsToPass.addAll(model.aStarPathFinding(orderToVisit[3], orderToVisit[4]));
+    	*/
     	for (int i=0; i<=gridsToPass.size()-2; i++) {
     		Location next = gridsToPass.get(i+1);
     		loc = gridsToPass.get(i);
@@ -311,7 +352,6 @@ public class EnvController extends Environment {
 				continue;
 			}
     	}
-    	logger.info("real plan size"+thePlan.size());
     	return thePlan;
     }
     
@@ -356,7 +396,7 @@ public class EnvController extends Environment {
     
 	void addAllPositionsToScout(){
 		for (Position pos : model.possiblePosition){
-			addPercept(SCOUT,pos.toLiteral());
+			addPercept(pos.toLiteral());
 		}
 	}
 	
@@ -388,18 +428,20 @@ public class EnvController extends Environment {
     void updatePercepts() {
     	this.clearPercepts(SCOUT);
     	addAllPositionsToScout();
-    	offerBestMove();
     }
     
-    void offerBestMove() {
+    void offerBfestMove() {
+    	this.removePerceptsByUnif(Literal.parseLiteral("bestMove(X,Y)"));
     	if (thePath != null && thePath.size() != 0) {
     		addPercept(DOCTOR,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
+            thePath.remove(0);
     	}
     }
     
 
     
     void move(String direction) {
+    	System.out.println("want to move" + direction);
     	Location scoutLoc = model.getAgPos(SCOUT_ID);
         switch (direction) {
 		case DOWN:
@@ -421,11 +463,10 @@ public class EnvController extends Environment {
 		}
         model.setAgPos(0, scoutLoc);
         model.heading = direction;
-        thePath.remove(0);
-        this.clearPercepts(SCOUT);
-        this.clearPercepts(DOCTOR);
-    	offerBestMove();
-    	this.addPercept(SCOUT, model.getPosition().toLiteral());
+        simulation.realPos = model.getPosition();
+        this.clearAllPercepts();
+        view.repaint();
+    	this.addPercept(model.getPosition().toLiteral());
     }
     
     // we are going to modify this part to connect to the robot
@@ -468,8 +509,8 @@ public class EnvController extends Environment {
     	// remove impossible positiosn according to the occupancy information and the color of the grid
 		HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
 		logger.info("new real="+simulation.realPos.toString());
-		logger.info("before removing");
-		if (model.possiblePosition.size() <= 20) this.printAllPosition(model.possiblePosition);
+		//logger.info("before removing");
+		//if (model.possiblePosition.size() <= 20) this.printAllPosition(model.possiblePosition);
 		for (Position pos: model.possiblePosition) {
 	   		if (containsPercept(SCOUT,OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
 	   			logger.info("");
@@ -523,13 +564,16 @@ public class EnvController extends Environment {
 			} 
 	   	}
 	   	model.possiblePosition = clonePool;
-   		if (model.possiblePosition.size()<=20) this.printAllPosition(model.possiblePosition);
+   		//if (model.possiblePosition.size()<=20) this.printAllPosition(model.possiblePosition);
 	   	//printAllPosition();
     	// there is only one location possible, then the location is determined
     	if (model.possiblePosition.size()==1) {
     		Position pos = model.possiblePosition.toArray(new Position[1])[0];
-    		model.setAgPos(SCOUT_ID, pos.getLoc());
     		model.heading = pos.getHeading();
+    		model.setAgPos(SCOUT_ID, pos.getLoc());
+    		model.localizationFinished = true;
+    		this.removePerceptsByUnif(Literal.parseLiteral("pos(_,_,_)"));
+    		this.addPercept(pos.toLiteral());
     		addPercept(DETERMINED_LOC);
     	} else {
     		// find ssssssss
@@ -614,7 +658,7 @@ public class EnvController extends Environment {
     
     public void getColorFromRobot() {
     	String color = simulation.getGridColor();
-    	logger.info("the color I got is " + color);
+    	System.out.println("the color I got is " + color);
     	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     }
     
@@ -950,7 +994,8 @@ public class EnvController extends Environment {
     	public Node getNewNode(int action) {
     		logger.info("before get new");
     		printAllPosition(this.pool);
-    		HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.pool.clone(), action);
+    		@SuppressWarnings("unchecked")
+			HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.pool.clone(), action);
     		Node newNode = new Node(newPool,action);
     		newNode.setFatherNode(this);
     		logger.info("before get new");

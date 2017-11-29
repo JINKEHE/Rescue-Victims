@@ -48,7 +48,7 @@ y(0).
 // Communication
 
 
-+task(finished)<- .print("nice! doctor asked me to stop working."); .wait(5000).
++task(finished)<- .print("nice! doctor asked me to stop working."); .wait(1000).
 
 
 +!init(wall): true
@@ -129,9 +129,9 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 
 +!do(localization) : determined(location) 
 	<- .print("Now I know where I am. Localization finished."); 
-	plan(path);
-	.send(doctor, tell, determined(location)); 
-	!do(task).
+	//plan(path);
+	.send(doctor, tell, determined(location)).	
+	//!do(task).
 
 +!do(localization) : not determined(location) 
 	<- ?bestAction(X); 
@@ -139,9 +139,8 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 	!scan(around); 
 	!do(localization).
 
-
-
-+!do(task): pos(X,Y,Z)
+/* 
++!analyze(color): pos(X,Y,Z)
 	<-.send(doctor,askOne,potentialVictim(X,Y),Reply);
 	if (not Reply=false){
 		detect(env); 
@@ -151,12 +150,23 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 		.print("finished to test color");
 		!found(C,X,Y); 
 		updateModel(C,X,Y);
-		.wait(2000);
-	} 
-	!check(mission).
+		.wait(1000);
+	}.
+*/
+
+// doctor will ask scout to analyze color
++!analyze(color) <- 
+	?pos(X,Y,Z)
+	detect(env);
+	.wait(1000);
+	?color(C);
+	!found(C,X,Y);
+	updateModel(C,X,Y);
+	.wait(1000);
+	.send(doctor,achieve,after(analysis)).
 	
-+!check(mission): task(finished) <- !check(mission).
-+!check(mission): not task(finished) <- .send(doctor,askOne,bestMove(X),bestMove(X)); move(X); -bestMove(X); !do(task).
+// doctor will tell scout how to move
++!moveTo(X) <- move(X); .wait(1000); .send(doctor,achieve,after(move)).
 
 +!found(blue,X,Y): true 
 	<- 
@@ -174,14 +184,4 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 +!found(white,X,Y): true 
 	<-.send(doctor,tell,white(X,Y)); 
 	.print("No victim here.",X,",",Y).
-
-/* 
-+!reschedule(plan): task(finished)
-	<- !reschedule(plan).
-
-+!reschedule(plan): true 
-	<- ?bestMove(X); 
-	move(X); 
-	!do(task).
-*/
 

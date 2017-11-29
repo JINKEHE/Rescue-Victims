@@ -14,6 +14,7 @@ import jason.environment.grid.Location;
 
 // a grid map
 public class EnvModel extends GridWorldModel {
+	public boolean localizationFinished = false;
 	
 	private static final int SCOUT_ID = 0;
 	

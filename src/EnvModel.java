@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.function.IntPredicate;
 
+import com.sun.media.jfxmedia.logging.Logger;
+
 import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.Location;
 import jason.stdlib.intend;
@@ -116,6 +118,8 @@ public class EnvModel extends GridWorldModel {
 			path.addFirst(grid);
 			grid = parents.get(grid);
 		}
+		Logger.WARNING(start+" -> "+"goal");
+		this.printPath(path);
 		return path;
 	}
 

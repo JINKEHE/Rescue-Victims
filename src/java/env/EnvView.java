@@ -75,12 +75,13 @@ import jason.environment.grid.GridWorldView;
         }
 */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
-        	if (controller.containsPercept(EnvController.DETERMINED_LOC) == true && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
+        	if (envModel.localizationFinished && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
         		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
-        	} else if (!controller.containsPercept(EnvController.DETERMINED_LOC)){
+        	} else if (!envModel.localizationFinished){
         		drawClones(g);
         	} else {
         		// no thing
+        		System.out.println("haoba");
         	}
         }
         
@@ -108,9 +109,11 @@ import jason.environment.grid.GridWorldView;
         
         public void drawClones(Graphics g) {
         	g.setColor(POSSIBILE_SCOUT_COLOR);
+        	if (envModel.possiblePosition.size() > 1) {
 			for (Position pos : envModel.possiblePosition) {
 				drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
 			}
+        	}
         }
         
         public void drawPotentialVictim(Graphics g, int x, int y) {

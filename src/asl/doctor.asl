@@ -46,7 +46,6 @@ objectValue(potentialVictim,32).
 	};
 	+addWall(finished).
 
-+bestMove(X) <- .send(scout,tell,bestMove(X)).
 
 /* Plans */
 
@@ -58,30 +57,43 @@ objectValue(potentialVictim,32).
 	.print("I told scout to start working.");
 	.send(scout,achieve,start).
 
-+!tell(Who,env): true
-	<- 
++!tell(Who,env) <- 
 	?width(X);
     ?height(Y);
     .send(Who,tell,width(X));
     .send(Who,tell,height(Y));
-	//.findall(wall(I,O),wall(I,O),ListOfWall);
-	//.send(Who,tell,ListOfWall);
 	.findall(obstacle(A,B),obstacle(A,B),ListOfObstacle);
 	.send(Who,tell,ListOfObstacle);
 	.send(Who,tell,initEnv(finished)).
 
-				          
++determined(location)[source(scout)] <- !do(plan); .wait(500); !do(mission).				          
 
-+red(X,Y) <- -potentialVictim(X,Y); !check(task).
-+green(X,Y) <- -potentialVictim(X,Y); !check(task).
-+blue(X,Y) <- -potentialVictim(X,Y); !check(task).
-+white(X,Y) <- -potentialVictim(X,Y).
++!do(mission) : pos(X,Y,Z) & potentialVictim(X,Y) <- .send(scout,achieve,analyze(color)).
++!do(mission) <- !after(analysis).
++!after(analysis) : not task(finished) <- get(nextMove); ?bestMove(X); .send(scout,achieve,moveTo(X)).
++!after(move) : not task(finished) <- !do(mission).	
++!after(analysis) : task(finished) <- !after(analysis).
++!after(move) : task(finished) <- !after(move).	
 
-+!check(task): red(_,_) & blue(_,_) & green(_,_) 
-	<- +task(finished);
++task(finished) <- .wait(50000); .print("task finished."); stop(everything).
+
++red(X,Y) <- -potentialVictim(X,Y); !check(mission).
++green(X,Y) <- -potentialVictim(X,Y); !check(mission).
++blue(X,Y) <- -potentialVictim(X,Y);  !check(mission).
++white(X,Y) <- -potentialVictim(X,Y); !check(mission).
+
++!check(mission): red(_,_) & blue(_,_) & green(_,_) <- 
+	+task(finished);
 	-potentialVictim(_,_);
-	.send(scout,tell,task(finished));.wait(1000); stop(everything).
-+!check(task).
+	//.send(scout,tell,task(finished));
+	.wait(500).
+	
++!check(mission) <- 
+	!do(plan).
+
++!do(plan) <- 
+	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List); 
+	plan(List).
 
 //+red(X,Y)[source(scout)] <- +red(X,Y); -potentialVictim(X,Y).
 //+green(X,Y)[source(scout)] <- +green(X,Y).
