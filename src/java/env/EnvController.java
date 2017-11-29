@@ -75,7 +75,7 @@ public class EnvController extends Environment {
 
     //private static final int VICTIM = 64;
     
-    private static final int DELAY = 300;
+    private static final int DELAY = 700;
     
     private static final String DOWN = "down";
     private static final String RIGHT = "right";
@@ -105,7 +105,6 @@ public class EnvController extends Environment {
     public void init(String[] args) {
     	
     	// add initial beliefs here in the demo
-    	this.buildSock();
     	Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3), new Location(3,3), new Location(3,4)};
     	Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6),new Location(4,4),new Location(2,5), new Location(1,4)}; 
     	Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
@@ -114,7 +113,7 @@ public class EnvController extends Environment {
 		model = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet);
         view = new EnvView(model, this);
         model.setView(view);
-        simulation = new Simulation(model);
+        //simulation = new Simulation(model);
         
     }
   //addInitialBeliefs(obstacles, possibleVictims);
@@ -192,6 +191,7 @@ public class EnvController extends Environment {
     		System.out.println("Server ready to send command");
     		try {
 				sersock = new ServerSocket(18888);
+				System.out.println(sersock.getLocalSocketAddress());
 				sock = sersock.accept();
 				keyRead = new BufferedReader(new InputStreamReader(System.in));
 				ostream = sock.getOutputStream(); 
@@ -246,7 +246,10 @@ public class EnvController extends Environment {
         	} else if (action.getFunctor().equals("askOccupied()")) {
         	
         	} else if (action.equals(Literal.parseLiteral("test(com)"))) {
+            	this.buildSock();
         		this.sendCommand("jeff's success");
+        	} else if (action.equals(Literal.parseLiteral("run(simulation)"))){
+        		simulation = new Simulation(model);
         	} else {
     			return false;
     		}
@@ -357,7 +360,7 @@ public class EnvController extends Environment {
 		}
 	}
 	
-	void printAllPosition() {
+	void printAllPosition(HashSet<Position> pool) {
 		for(int x=0;x<W_GRID;x++) {
 			for(int y=0;y<H_GRID;y++) {
 				if(!isOccupied(x,y)) {
@@ -365,16 +368,16 @@ public class EnvController extends Environment {
 					Position down = new Position(x,y,DOWN);
 					Position left = new Position(x,y,LEFT);
 					Position right = new Position(x,y,RIGHT);
-					if (model.possiblePosition.contains(up)) {
+					if (pool.contains(up)) {
 						logger.info(up.toString());
 					}
-					if (model.possiblePosition.contains(down)) {
+					if (pool.contains(down)) {
 						logger.info(down.toString());
 					}
-					if (model.possiblePosition.contains(left)) {
+					if (pool.contains(left)) {
 						logger.info(left.toString());
 					}
-					if (model.possiblePosition.contains(right)) {
+					if (pool.contains(right)) {
 						logger.info(right.toString());
 					}
 				}
@@ -389,9 +392,7 @@ public class EnvController extends Environment {
     }
     
     void offerBestMove() {
-    	logger.info("not null?"+(thePath!=null));
     	if (thePath != null && thePath.size() != 0) {
-    		logger.info("offered");
     		addPercept(DOCTOR,Literal.parseLiteral("bestMove("+thePath.get(0)+")"));
     	}
     }
@@ -466,13 +467,16 @@ public class EnvController extends Environment {
     	String color = getColorInBeliefBase();
     	// remove impossible positiosn according to the occupancy information and the color of the grid
 		HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
-		logger.info("real="+simulation.realPos.toString());
+		logger.info("new real="+simulation.realPos.toString());
+		logger.info("before removing");
+		if (model.possiblePosition.size() <= 20) this.printAllPosition(model.possiblePosition);
 		for (Position pos: model.possiblePosition) {
 	   		if (containsPercept(SCOUT,OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
+	   			logger.info("");
 	   			if (pos.equals(simulation.realPos)) {
 		   			logger.info("contain"+containsPercept(OCCUPIED_FRONT));
 		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_FRONT));
-	   				logger.info("meila front");
+	   				logger.info("meila front\n\n\n\n");
 	   			}
 
 	   			clonePool.remove(pos);
@@ -482,7 +486,7 @@ public class EnvController extends Environment {
 	   			if (pos.equals(simulation.realPos)){
 	   				logger.info("contain"+containsPercept(OCCUPIED_BACK));
 		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_BACK));
-	   				logger.info("meila back");
+	   				logger.info("meila back\n\n\n\n\n");
 	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
@@ -490,7 +494,7 @@ public class EnvController extends Environment {
 	   		}  
 	   		if (containsPercept(SCOUT,OCCUPIED_LEFT) != isRelativeOccupied(pos, RELATIVE_LEFT)) {
 	   			if (pos.equals(simulation.realPos)){
-	   				logger.info("meila left");
+	   				logger.info("meila left\n\n\n\n");
 	   				logger.info("contain"+containsPercept(OCCUPIED_LEFT));
 		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_LEFT));
 	   			}
@@ -500,7 +504,7 @@ public class EnvController extends Environment {
 	   		}  
 	   		if (containsPercept(SCOUT,OCCUPIED_RIGHT) != isRelativeOccupied(pos, RELATIVE_RIGHT)) {
 	   			if (pos.equals(simulation.realPos)) {
-	   				logger.info("meila right");
+	   				logger.info("meila right\n\n\n\n\n\n");
 	   				logger.info("contain"+containsPercept(OCCUPIED_RIGHT));
 		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_RIGHT));
 	   			}
@@ -509,16 +513,17 @@ public class EnvController extends Environment {
 	   			continue;
 	   		}
 	   		if (!getColorAt(pos.getLoc()).equals(POSSIBLE) && !getColorAt(pos.getLoc()).equals(color)) {
+	   			logger.info("meila color\n\n\n\n\n\n");
 	   			if (pos.equals(simulation.realPos)){
-	   				logger.info("meila color");
+	   				logger.info("meila color\n\n\n\n\n\n");
 	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
 				continue;
 			} 
-	   		//this.printAllPosition();
 	   	}
 	   	model.possiblePosition = clonePool;
+   		if (model.possiblePosition.size()<=20) this.printAllPosition(model.possiblePosition);
 	   	//printAllPosition();
     	// there is only one location possible, then the location is determined
     	if (model.possiblePosition.size()==1) {
@@ -528,7 +533,15 @@ public class EnvController extends Environment {
     		addPercept(DETERMINED_LOC);
     	} else {
     		// find ssssssss
-    		int bestAction = chooseAction();
+    		int bestAction;
+    		logger.info("how many?"+model.possiblePosition.size());
+    		logger.info("just before search");
+    		this.printAllPosition(model.possiblePosition);
+    		if (model.possiblePosition.size()>=4){
+    			bestAction = chooseAction();
+    		} else {
+    			bestAction = chooseActionViaTreeSearch(model.possiblePosition);
+    		}
     		addPercept(SCOUT,Literal.parseLiteral("bestAction("+bestAction+")"));
     		/*
     		if (model.possiblePosition.size()!=2){
@@ -545,10 +558,10 @@ public class EnvController extends Environment {
 			Thread.sleep(DELAY);
 		} catch (InterruptedException e) {
 		}
-    	logger.info("real="+simulation.realPos.toString());
-    	//printAllPosition();
+    	
 		view.repaint();
     }
+   
     
     public void updateModel(String color, String xInput, String yInput){
     	int x = Integer.valueOf(xInput);
@@ -601,6 +614,7 @@ public class EnvController extends Environment {
     
     public void getColorFromRobot() {
     	String color = simulation.getGridColor();
+    	logger.info("the color I got is " + color);
     	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     }
     
@@ -675,7 +689,13 @@ public class EnvController extends Environment {
     // if at least one possible position can be removed, than diffNum > 2
     
     // whether this action can remove at least one possible position
-    boolean canThisActionDistinguish(HashSet<Position> pool, int action) {
+    boolean canThisActionDistinguish(HashSet<Position> thePool, int action) {
+    	@SuppressWarnings("unchecked")
+		HashSet<Position> pool = (HashSet<Position>) thePool.clone();
+    	logger.info("print of can");
+    	logger.info("the size"+pool.size());
+    	this.printAllPosition(pool);
+    	logger.info("print of can");
     	// if action is not valid, return -1
 	    ArrayList<String> results = new ArrayList<String>();
 	    for (Position pos : pool) {
@@ -686,9 +706,86 @@ public class EnvController extends Environment {
 		    results.add(getRelativeOccupiedInfo(copy));
 	    }
 	    double diffNum = new HashSet<String>(results).size();
+	    logger.info("diff num"+diffNum);
 	    return diffNum>1;
     }
     
+    // do a breadth first tree search - return the first action to make
+    public int chooseActionViaTreeSearch(HashSet<Position> thePool) {
+    	@SuppressWarnings("unchecked")
+		HashSet<Position> workingPool = (HashSet<Position>) thePool.clone();
+    	logger.info("just before again");
+    	this.printAllPosition(workingPool);
+    	logger.info("Tree Search Started");
+    	logger.info("just after again");
+    	this.printAllPosition(workingPool);
+    	Node root = new Node(workingPool,-1);
+    	ArrayList<Node> listOfNodes = new ArrayList<Node>();
+    	listOfNodes.add(root);
+		while(true) {
+			ArrayList<Node> newList = new ArrayList<Node>();
+			for (Node node : listOfNodes) {
+				logger.info("just before again");
+				logger.info("the working"+workingPool.size());
+		    	this.printAllPosition(workingPool);
+		    	logger.info("the node"+node.pool.size());
+		    	this.printAllPosition(node.pool);
+				if (!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_FRONT)) {
+					Node newNode = node.getNewNode(RELATIVE_FRONT);
+					if (canThisActionDistinguish(node.pool, RELATIVE_FRONT)) {
+						newNode.printPathFound();
+						logger.info("action chosen"+RELATIVE_FRONT);
+						return newNode.getActionTakenToRoot();
+					}
+					newList.add(newNode);
+				}
+				if (!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_BACK)){
+					Node newNode = node.getNewNode(RELATIVE_BACK);
+					if (canThisActionDistinguish(node.pool, RELATIVE_BACK)) {
+						newNode.printPathFound();
+						logger.info("action chosen"+RELATIVE_BACK);
+						return newNode.getActionTakenToRoot();
+					}
+					newList.add(newNode);
+				}
+				if(!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_LEFT)) {
+					Node newNode = node.getNewNode(RELATIVE_LEFT);
+					if (canThisActionDistinguish(node.pool, RELATIVE_LEFT) ) {
+						newNode.printPathFound();
+						logger.info("action chosen"+RELATIVE_LEFT);
+						return newNode.getActionTakenToRoot();
+					}
+					newList.add(newNode);
+				}
+				if(!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_RIGHT)) {
+					Node newNode = node.getNewNode(RELATIVE_RIGHT);
+					if (canThisActionDistinguish(node.pool, RELATIVE_RIGHT)) {
+						newNode.printPathFound();
+						logger.info("action chosen"+RELATIVE_RIGHT);
+						return newNode.getActionTakenToRoot();
+					}
+					newList.add(newNode);
+				}
+			}
+			listOfNodes = newList;
+			if (newList.size() >= 100) {
+				logger.info("size"+newList.size());
+				return 0;
+			}
+		}
+    }
+    
+    
+    
+    public HashSet<Position> moveTheWholePool(HashSet<Position> pool, int action) {
+    	HashSet<Position> resultPool = new HashSet<Position>();
+    	for (Position pos: pool) {
+    		Position copy = pos.clone();
+    		copy.relativeMove(action);
+    		resultPool.add(copy);
+    	}
+    	return resultPool;
+    }
     
     int chooseAction() {
     	double[] resultsOfActions = new double[4];
@@ -752,16 +849,16 @@ public class EnvController extends Environment {
     	private Simulation(EnvModel envModel) {
     		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
-    		realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
-    		/*
+    		//realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
+    		realVictims = new Location[]{new Location(1,4),new Location(2,5),new Location(4,4)};
     		logger.info("First real victim = "+list.get(0));
     		logger.info("Second real victim = "+list.get(1));
     		logger.info("Third real victim = "+list.get(2));
-    		*/
-    		realPos = new Position(5, 2, "down");
+    		realPos = new Position(4, 2, "down");
     		// generate random heading
     		List<String> headingList = Arrays.asList(new String[]{LEFT,RIGHT,UP,DOWN});
     		Collections.shuffle(headingList);
+   
     		String heading = headingList.get(1);
     		// generate random position
     		int x=1, y=1;
@@ -776,6 +873,8 @@ public class EnvController extends Environment {
     			}
     		}
     		realPos = new Position(x,y,heading);
+    		realPos = new Position(2,4,"up");
+    		//realPos = new Position(4,5,"down");
     		// index -> severity
     	}
     	
@@ -813,6 +912,60 @@ public class EnvController extends Environment {
     			return GREEN;
     		} else {
     			return WHITE;
+    		}
+    	}
+    }
+    
+    
+    class Node {
+    	public HashSet<Position> pool;
+    	Node fatherNode;
+    	int actionTakenToFather;
+    	@SuppressWarnings("unchecked")
+		public Node(HashSet<Position> thePool, int action) {
+    		pool = (HashSet<Position>) thePool.clone();
+    		actionTakenToFather = action;
+    		fatherNode = null;
+    	}
+
+		void setFatherNode(Node theFatherNode) {
+    		this.fatherNode = theFatherNode;
+    	}
+    	Node getFatherNode() {
+    		return fatherNode;
+    	}
+    	int getActionTakenToFather() {
+    		return actionTakenToFather;
+    	}
+    	int getActionTakenToRoot() {
+    		int action = getActionTakenToFather();
+    		Node father = getFatherNode();
+    		logger.info(father+"");
+    		while (father.getFatherNode() != null) {
+    			action = father.getActionTakenToFather();
+    			father = father.getFatherNode();
+    		}
+    		return action;
+    	}
+    	public Node getNewNode(int action) {
+    		logger.info("before get new");
+    		printAllPosition(this.pool);
+    		HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.pool.clone(), action);
+    		Node newNode = new Node(newPool,action);
+    		newNode.setFatherNode(this);
+    		logger.info("before get new");
+    		printAllPosition(this.pool);
+    		return newNode;
+    	}
+    	public void printPathFound() {
+    		if (this.fatherNode==null) return;
+    		int action = this.actionTakenToFather;
+    		Node father = this.fatherNode;
+    		logger.info(action+"->");
+    		while (father.getFatherNode()!=null){
+    			action = father.getActionTakenToFather();
+    			logger.info(action+"->");
+    			father = father.getFatherNode();
     		}
     	}
     }

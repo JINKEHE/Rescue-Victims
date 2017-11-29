@@ -51,7 +51,7 @@ objectValue(potentialVictim,32).
 /* Plans */
 
 +!start : true <- 
-	test(com);
+	//test(com);
 	!init(wall);
 	!tell(scout,env);
 	.print("I started to work."); 
@@ -80,7 +80,7 @@ objectValue(potentialVictim,32).
 +!check(task): red(_,_) & blue(_,_) & green(_,_) 
 	<- +task(finished);
 	-potentialVictim(_,_);
-	.send(scout,tell,task(finished)).
+	.send(scout,tell,task(finished));.wait(1000); stop(everything).
 +!check(task).
 
 //+red(X,Y)[source(scout)] <- +red(X,Y); -potentialVictim(X,Y).

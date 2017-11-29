@@ -48,7 +48,7 @@ y(0).
 // Communication
 
 
-+task(finished): .print("nice! doctor asked me to stop working.").
++task(finished)<- .print("nice! doctor asked me to stop working."); .wait(5000).
 
 
 +!init(wall): true
@@ -81,6 +81,7 @@ y(0).
 	add(all);
 	//.wait({+initEnv(finished)[source(doctor)]});
 	//!addAll(possiblePos);
+	run(simulation);
 	!remove(impossible);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
@@ -118,12 +119,12 @@ if (not wall(X,Y) & not obstacle(X,Y)){
 +!remove(impossible)
 <-
 .findall(pos(X,Y,Heading),pos(X,Y,Heading),ListOfPos);
-.print(ListOfPos);
+//.print(ListOfPos);
 for (.member(pos(X,Y,Heading),ListOfPos)) {
 	
 }.
-
-+!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
++!check(localization): .count(pos(_,_,_),X) & X=1 <- +determined(location).
+//+!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
 +!check(localization).
 
 +!do(localization) : determined(location) 
@@ -150,6 +151,7 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 		.print("finished to test color");
 		!found(C,X,Y); 
 		updateModel(C,X,Y);
+		.wait(2000);
 	} 
 	!check(mission).
 	
