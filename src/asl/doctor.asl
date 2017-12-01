@@ -10,15 +10,15 @@ x(0).
 y(0).
 
 /* Initial goals */
+obstacle(1,1).
 obstacle(2,1).
-obstacle(2,3).
-obstacle(3,3).
-obstacle(3,4).
+obstacle(3,1).
+obstacle(1,2).
 potentialVictim(2,2).
-potentialVictim(5,6).
-potentialVictim(4,4).
-potentialVictim(2,5).
-potentialVictim(1,4).
+potentialVictim(3,2).
+potentialVictim(4,1).
+potentialVictim(5,5).
+potentialVictim(2,4).
 
 objectValue(wall,128).
 objectValue(obstacle,16).
@@ -26,10 +26,16 @@ objectValue(potentialVictim,32).
 
 !start.
 
-+wall(X,Y) <- ?objectValue(wall,WALL) ; addObject(WALL,X,Y).
-+obstacle(X,Y) <- ?objectValue(obstacle,OBSTACLE) ; addObject(16,X,Y).
-+potentialVictim(X,Y) <- ?objectValue(potentialVictim,POTENTIAL_VICTIM) ; addObject(POTENTIAL_VICTIM,X,Y).
+ 
++wall(X,Y) <- ?objectValue(wall,WALL).
++obstacle(X,Y) <- ?objectValue(obstacle,OBSTACLE).
++potentialVictim(X,Y) <- ?objectValue(potentialVictim,POTENTIAL_VICTIM).
 
+/*
++wall(X,Y) <- ?objectValue(wall,WALL).
++obstacle(X,Y) <- ?objectValue(obstacle,OBSTACLE).
++potentialVictim(X,Y) <- ?objectValue(potentialVictim,POTENTIAL_VICTIM).
+*/
 +!init(wall): true
 	<- 
 	while(x(X) & width(W) & X<=W-1) {
@@ -49,14 +55,35 @@ objectValue(potentialVictim,32).
 
 /* Plans */
 
-+!start : true <- 
++!start : true <-
 	//test(com);
 	!init(wall);
 	!tell(scout,env);
-	build(mode);
+	.wait(2000);
+	!build(model);
 	.print("I started to work."); 
 	.print("I told scout to start working.");
 	.send(scout,achieve,start).
+
++!build(model) <-
+	?width(Width);
+	?height(Height);
+	.findall(potentialVictim(X,Y),potentialVictim(X,Y),VictimList);
+	.findall(obstacle(A,B),obstacle(A,B),ObstacleList);
+	buildModel(Width,Height,VictimList,ObstacleList);
+	.findall(wall(W,E),wall(W,E),WallList);
+	for (.member(wall(I,G),WallList)) { 
+		?objectValue(wall,WALL); 
+		addObject(WALL,I,G);
+	};
+	for (.member(obstacle(Q,G),ObstacleList)) { 
+		?objectValue(obstacle,OBSTACLE) ; 
+		addObject(OBSTACLE,Q,G);
+	};
+	for (.member(potentialVictim(K,T),VictimList)) {
+		?objectValue(potentialVictim,POTENTIAL_VICTIM) ; 
+		addObject(POTENTIAL_VICTIM,K,T)
+	}.
 
 +!tell(Who,env) <- 
 	?width(X);

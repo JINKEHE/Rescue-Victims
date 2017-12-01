@@ -35,11 +35,13 @@ public class Megatron {
 	private static final double ADJUST_ANGLE_THRESHOLD = 20;
 	private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
 	private static final double MOVE_DISTANCE = 10;
-	private boolean calibrationEnabled = false;
+	private boolean firstStepFinished = false;
 	// for pilot setting (optimized through experiments)
 	private MovePilot pilot;
 	private static final double ANGULAR_SPEED = 50;
 	private static final double ANGULAR_ACCELERATION = 200;
+	private static final double LINEAR_SPEED = 10;
+	private static final double LINEAR_ACCELERATION = 60;
 	private static final double DIAMETER = 4.4;
 	private static final double OFFSET = 5.5;
 	private static final double FIXED_LENGTH_DISTANCE = 12;
@@ -186,6 +188,8 @@ public class Megatron {
 		pilot = new MovePilot(myChassis);
 		pilot.setAngularSpeed(ANGULAR_SPEED);
 		pilot.setAngularAcceleration(ANGULAR_ACCELERATION);
+		pilot.setLinearSpeed(LINEAR_SPEED);
+		pilot.setLinearAcceleration(LINEAR_ACCELERATION);
 	}
 	
 	// assume we don't ourheading, then we don't how far we should travel in each step because the grid is not square
@@ -227,7 +231,7 @@ public class Megatron {
 	private void doCalibration(String direction) {
 		int sensorToRotate = 0;
 		boolean reverse = false;
-		if (!calibrationEnabled || direction.equals(RELATIVE_FRONT)) {
+		if (!firstStepFinished || direction.equals(RELATIVE_FRONT)) {
 			return;
 		} else if (direction.equals(RELATIVE_BACK) || direction.equals(RELATIVE_RIGHT)) {
 			// according to the left obstacle
@@ -328,11 +332,11 @@ public class Megatron {
 				if (command.equals("get(color)")) {
 					output.println(this.getColorName());
 				} else if (command.equals("get(occupied)")) {
-					output.println(isOccupied());
+					output.println(getOccupiedInfo());
 				} else if (command.startsWith("move")) {
 					String[] parameters = getParameters(command);
 					output.println(this.moveRelatively(parameters[0]));
-					calibrationEnabled = true;
+					firstStepFinished = true;
 				} 
 				output.flush();
 			} catch (IOException e) {
@@ -362,7 +366,7 @@ public class Megatron {
 	
 
 	
-	public String isOccupied(){
+	public String getOccupiedInfo(){
 		char[] results = new char[4];
 		String str = "";
 		// get front first
@@ -372,20 +376,18 @@ public class Megatron {
 		uSensorMotor.rotate(-90);
 		boolean right = getAccurateDistance() < OCCUPIED_THRESHOLD;
 		results[3] = right ? '1' : '0';
-		// sensor rotate left 90
-		uSensorMotor.rotate(90);
-		// robot rotate left 90 get left
-		pilot.rotate(-90);
+		// sensor rotate left 180
+		uSensorMotor.rotate(180);
 		boolean left = getAccurateDistance() < OCCUPIED_THRESHOLD;
 		results[2] = left ? '1' : '0';
-		// sensor rotate left 90 get back
-		uSensorMotor.rotate(90);
-		boolean back = getAccurateDistance() < OCCUPIED_THRESHOLD;
-		results[1] += back ? '1' : '0';
-		// sensor rotate right 90
+		if (firstStepFinished == true) {
+			results[1] = '0';
+		} else {
+			pilot.rotate(-90);
+			results[1] = getAccurateDistance() < OCCUPIED_THRESHOLD ? '1' : '0';
+			pilot.rotate(90);
+		}
 		uSensorMotor.rotate(-90);
-		// robot rotate right 90
-		pilot.rotate(90);
 		str = new String(results);
 		System.out.println(str);
 		return str;

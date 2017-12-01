@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jason.asSyntax.Literal;
@@ -35,8 +34,8 @@ public class EnvController extends Environment {
 	private static final String SCOUT = "scout";
 	private static final String DOCTOR = "doctor";
 	
-	private static final int W_GRID = 5 + 2;
-	private static final int H_GRID = 6 + 2;
+	private int W_GRID = 5 + 2;
+	private int H_GRID = 6 + 2;
 	
 	static final Literal test = Literal.parseLiteral("test");
 	
@@ -107,19 +106,11 @@ public class EnvController extends Environment {
 
     // TODO get info from doctor
     public void init(String[] args) {
-    	
-    	// add initial beliefs here in the demo
-    	Location[] obstacles = new Location[]{new Location(2,1),new Location(2,3), new Location(3,3), new Location(3,4)};
-    	Location[] possibleVictims = new Location[]{new Location(2,2),new Location(5,6),new Location(4,4),new Location(2,5), new Location(1,4)}; 
-    	Set<Location> obstaclesSet = new HashSet<Location>(Arrays.asList(obstacles)); 
-		Set<Location> possibleVictimsSet = new HashSet<Location>(Arrays.asList(possibleVictims)); 
-    	// create model and view
+    	Set<Location> obstaclesSet = new HashSet<Location>(); 
+		Set<Location> possibleVictimsSet = new HashSet<Location>(); 
 		model = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet);
         view = new EnvView(model, this);
         model.setView(view);
-        //simulation = new Simulation(model);
-        //logger.setLevel(Level.WARNING);
-        
     }
     
     
@@ -228,19 +219,19 @@ public class EnvController extends Environment {
     
     public void closeSock() {
     		try {
-    				receiveRead.close();
-    				istream.close();
-    				pwrite.close();
-    				ostream.close();
-    				keyRead.close();
-    				sock.close();
+    			receiveRead.close();
+    			istream.close();
+    			pwrite.close();
+    			ostream.close();
+    			keyRead.close();
+    			sock.close();
 				sersock.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
     }
     public boolean executeAction(String agName, Structure action) {
-    	
+
     	try {
     		if (action.equals(ADD_ALL)) {
     			addAllPositionsToPool();
@@ -292,6 +283,16 @@ public class EnvController extends Environment {
     				this.getOccpuiedInfoFromRobot();
     			}
     			view.repaint();
+    		} else if (action.getFunctor().equals("buildModel")) {
+    			W_GRID = Integer.valueOf(action.getTerm(0).toString());
+    			H_GRID = Integer.valueOf(action.getTerm(1).toString());
+    			String victimListStr = action.getTerm(2).toString();
+    			String obstacleListStr = action.getTerm(3).toString();
+    			HashSet<Location> victimLocs = strToLocSet(victimListStr);
+    			HashSet<Location> obstacleLocs = strToLocSet(obstacleListStr);
+    			model = new EnvModel(W_GRID, H_GRID, obstacleLocs, victimLocs);
+    	        view = new EnvView(model, this);
+    	        model.setView(view);
     		} else {
     			return false;
     		}
@@ -629,6 +630,7 @@ public class EnvController extends Environment {
 	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}
+	   		System.out.println("the real color: " + color);
 	   		if (!getColorAt(pos.getLoc()).equals(POSSIBLE) && !getColorAt(pos.getLoc()).equals(color)) {
 //	   			logger.info("meila color\n\n\n\n\n\n");
 //	   			if (pos.equals(simulation.realPos)){
@@ -961,7 +963,7 @@ public class EnvController extends Environment {
 				}
 			}
 			listOfNodes = newList;
-			if (newList.size() >= 100) {
+			if (newList.size() >= 10000) {
 				logger.info("size"+newList.size());
 				return 0;
 			}
@@ -1043,11 +1045,11 @@ public class EnvController extends Environment {
     		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
     		//realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
-    		realVictims = new Location[]{new Location(1,4),new Location(2,5),new Location(4,4)};
+    		// red blue green
+    		realVictims = new Location[]{new Location(1,1),new Location(5,1),new Location(3,4)};
     		logger.info("First real victim = "+list.get(0));
     		logger.info("Second real victim = "+list.get(1));
     		logger.info("Third real victim = "+list.get(2));
-    		realPos = new Position(4, 2, "down");
     		// generate random heading
     		List<String> headingList = Arrays.asList(new String[]{LEFT,RIGHT,UP,DOWN});
     		Collections.shuffle(headingList);
@@ -1066,7 +1068,7 @@ public class EnvController extends Environment {
     			}
     		}
     		realPos = new Position(x,y,heading);
-    		realPos = new Position(2,4,"up");
+    		realPos = new Position(1,5,"up");
     		//realPos = new Position(4,5,"down");
     		// index -> severity
     	}
