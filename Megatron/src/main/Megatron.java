@@ -32,7 +32,7 @@ public class Megatron {
 	private NXTRegulatedMotor uSensorMotor;
 	// for calibrations
 	private static final double IDEAL_DISTANCE = 15;
-	private static final double ADJUST_ANGLE_THRESHOLD = 20;
+	private static final double ADJUST_ANGLE_THRESHOLD = 28;
 	private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
 	private static final double MOVE_DISTANCE = 10;
 	private boolean firstStepFinished = false;
@@ -175,6 +175,7 @@ public class Megatron {
 			}
 			break;
 		}
+		System.out.println(average);
 		return average;
 	}
 
@@ -228,6 +229,9 @@ public class Megatron {
 		return DONE;
 	}
 	
+	/* calibration related methods */
+	
+	// do calibration
 	private void doCalibration(String direction) {
 		int sensorToRotate = 0;
 		boolean reverse = false;
@@ -244,14 +248,16 @@ public class Megatron {
 		}
 		uSensorMotor.rotate(sensorToRotate);
 		double distance = getAccurateDistance();
-		if (distance < IDEAL_DISTANCE) {
-			System.out.println("distance to adjust? " + distance);
+		if (distance < OCCUPIED_THRESHOLD) {
 			adjustAngle(reverse);
+		}
+		if (distance < IDEAL_DISTANCE) {
 			adjustDistance(reverse);
 		}
 		uSensorMotor.rotate(-sensorToRotate);
 	}
 	
+	// adjust the angle between the wall
 	private void adjustAngle(boolean reverse){
 		pilot.travel(-MOVE_DISTANCE);
 		double firstDist = getAccurateDistance();
@@ -259,17 +265,19 @@ public class Megatron {
 		double secondDist = getAccurateDistance();
 		double tantheta = (secondDist-firstDist)/MOVE_DISTANCE;
 		double theta = Math.atan(tantheta)*180/Math.PI;
-		if (Math.abs(theta)>ADJUST_ANGLE_THRESHOLD ) theta = ADJUST_ANGLE_THRESHOLD;
+		if (Math.abs(theta)>ADJUST_ANGLE_THRESHOLD ) theta = 0;
 		theta *= reverse ? -1 : 1;
 		pilot.rotate(theta);
 	}
 	
+	// adjust the distance between the wall
 	private void adjustDistance(boolean reverse) {
 		double currentDistance = getAccurateDistance();
 		double diff = IDEAL_DISTANCE - currentDistance;
 		double sintheta = diff/MOVE_DISTANCE;
 		if (sintheta > 1) return; // in case unexpected thing happened
 		double theta = Math.asin(sintheta)*180/Math.PI;
+		if (theta > 80) theta = ADJUST_ANGLE_THRESHOLD;
 		theta *= reverse ? -1 : 1;
 		if (Math.abs(theta) > MINIMAL_ANGLE_TO_ADJUST){
 			pilot.rotate(theta);
@@ -288,24 +296,20 @@ public class Megatron {
 		System.exit(0);
 	}
 	
-
-	
+	// set up the server
 	private void setupServer() {
 		try {
 			server = new ServerSocket(PORT);
-		} catch (IOException e1) {
-		}
-		boolean connected = false;
-		while(!connected){
-			try{
-				sock = server.accept();
-				connected = true;
-				Sound.beep();
-			} catch (Exception e) {
-				
+			boolean connected = false;
+			while(!connected){
+				try{
+					sock = server.accept();
+					connected = true;
+					Sound.beep();
+				} catch (Exception e) {
+					
+				}
 			}
-		}
-		try{
 			outputStream = sock.getOutputStream();
 			output = new PrintWriter(outputStream, true);
 			inputStream = sock.getInputStream();
@@ -314,8 +318,6 @@ public class Megatron {
 			
 		}
 	}
-	
-	
 	
 	// constructor of Megatron, also the main loop
 	public Megatron() {
@@ -347,7 +349,7 @@ public class Megatron {
 	
 	// extract parameters from a command
 	// for example, say(hello,world,nihao) -> ["hello","world","nihao"]
-	public String[] getParameters(String command) {
+	private String[] getParameters(String command) {
 		String[] info = command.split(",");
 		String[] parameters = new String[info.length];
 		for (int i=0; i<=parameters.length-1; i++){
@@ -362,11 +364,9 @@ public class Megatron {
 		return parameters;
 	}
 	
-
-	
-
-	
-	public String getOccupiedInfo(){
+	// get occupancy information around the robot
+	// the return would be a binary string
+	private String getOccupiedInfo(){
 		char[] results = new char[4];
 		String str = "";
 		// get front first
@@ -392,8 +392,6 @@ public class Megatron {
 		System.out.println(str);
 		return str;
 	}
-	
-
 	
 	public static void main(String[] args) {
 		new Megatron();

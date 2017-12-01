@@ -1,7 +1,6 @@
 package env;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +22,7 @@ import jason.environment.grid.Location;
 
 
 // the centralised environment
-public class EnvController extends Environment {
+public class Playground extends Environment {
 	
 	// (front)(back)(left)(right)
 	private static final int RELATIVE_FRONT = 0;
@@ -67,13 +66,9 @@ public class EnvController extends Environment {
 	public static final String GREEN = "green";
 	public static final String POSSIBLE = "possible";
 	
-    private Logger logger = Logger.getLogger("optmistor."+ EnvController.class.getName());
-
-    public static final int GARB  = 16;
+    private Logger logger = Logger.getLogger("optmistor."+ Playground.class.getName());
     
     private static final int SCOUT_ID = 0;
-
-    //private static final int VICTIM = 64;
     
     private static final int DELAY = 500;
     
@@ -86,7 +81,7 @@ public class EnvController extends Environment {
     private EnvView view;
     private Simulation simulation;
     
-    private boolean simu = false;
+    private boolean simu = true;
     
     public static final Literal goScout = Literal.parseLiteral("go(next)");
 
@@ -103,14 +98,8 @@ public class EnvController extends Environment {
     InputStream istream;
     BufferedReader receiveRead;
     
-
-    // TODO get info from doctor
     public void init(String[] args) {
-    	Set<Location> obstaclesSet = new HashSet<Location>(); 
-		Set<Location> possibleVictimsSet = new HashSet<Location>(); 
-		model = new EnvModel(W_GRID, H_GRID, obstaclesSet, possibleVictimsSet);
-        view = new EnvView(model, this);
-        model.setView(view);
+    	logger.info("Environment initialized.");
     }
     
     
@@ -119,49 +108,6 @@ public class EnvController extends Environment {
     	
     }
     
-  //addInitialBeliefs(obstacles, possibleVictims);
-    /*
-    public void addInitialBeliefs(Location[] obstacles, Location[] possibleVictims) {
-    	// add walls
-    	for (int w = 0; w <= model.getWidth() - 1; w++) {
-			//addPercept(DOCTOR,Literal.parseLiteral("wall("+w+","+0+")"));
-			//addPercept(DOCTOR,Literal.parseLiteral("wall("+w+","+(model.getHeight()-1)+")"));
-		}
-		for (int h = 0; h <= model.getHeight() - 1; h++) {
-			//addPercept(DOCTOR,Literal.parseLiteral("wall("+0+","+h+")"));
-			//addPercept(DOCTOR,Literal.parseLiteral("wall("+(model.getWidth()-1)+","+h+")"));
-		}
-		// add obstacles
-		for (Location loc : obstacles) {
-			//addPercept(DOCTOR,Literal.parseLiteral("obstacle("+loc.x+","+loc.y+")"));
-		}
-		for (Location loc : possibleVictims) {
-			addPercept(DOCTOR,Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
-			addPercept(SCOUT,Literal.parseLiteral("potentialVictim("+loc.x+","+loc.y+")"));
-		}
-    }
-    */
-    /*
-    public void initializeEnv() {
-    	//
-    }*/
-    
-    
-    /*       the list of internal actions      
-     * 				
-     * 	 name (in Jason)        Literal (in Java)       corresponding method       functionality
-     * 
-     *   add(all)               ADD_ALL                 addAllPositions()
-     * 
-     * 	 execute(X)                                     execute(String action)    execute an movement action               
-     * 
-     *   detect(env)            DETECT_ENV              getEnvInfo()              
-     * 
-     *   remove(impossible)     REMOVE_IMPOSSIBLE       removeImpossiblePositions() remove impossible positions; generate the belief bestAction(X)
-     *   
-     *   
-     *   
-     * */
 	public String sendCommand(String command) {
 		
 		// send command to the robot via socket
@@ -243,7 +189,7 @@ public class EnvController extends Environment {
     			moveBeforeLocalization(action.getTerm(0).toString());
     		} else if (action.equals(Literal.parseLiteral("get(color)"))) {
     			if (simu==true) {
-    				this.getColorFromSimulation();
+    				simulation.getColorFromSimulation();
     			} else {
     				this.getColorFromRobot();
     			}
@@ -278,7 +224,7 @@ public class EnvController extends Environment {
     			this.offerBfestMove();
     		} else if (action.equals(Literal.parseLiteral("get(occupied)"))){
     			if (simu==true) {
-    				this.getOccupiedInfoFromSimulation();
+    				simulation.getOccupiedInfoFromSimulation();
     			} else {
     				this.getOccpuiedInfoFromRobot();
     			}
@@ -538,25 +484,20 @@ public class EnvController extends Environment {
         	getOccpuiedInfoFromRobot();
         	logger.info("got occupany info from robot");
     		} else {
-    			getColorFromSimulation();
-    			getOccupiedInfoFromSimulation();
+    			simulation.getColorFromSimulation();
+    			simulation.getOccupiedInfoFromSimulation();
     		}
     	} else {
     		if (simu==false){
     		getColorFromRobot();
     		} else {
-    			getColorFromSimulation(); 	 
+    			simulation.getColorFromSimulation(); 	 
     		}
     	}
     	view.repaint();
     }
     
-    void getOccupiedInfoFromSimulation() {
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
-		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
-    }
+
     
 	// !!! this method should be modified !!! �$%^&*())))(*&^%$�$%^&*(*&^%$%^&*
     void getOccpuiedInfoFromRobot() {
@@ -746,11 +687,7 @@ public class EnvController extends Environment {
     	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     }
     
-    public void getColorFromSimulation() {
-    	String color = simulation.getGridColor();
-    	System.out.println("the color I got is " + color);
-    	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
-    }
+
     
     
     // get the color of a grid 
@@ -923,41 +860,37 @@ public class EnvController extends Environment {
 				logger.info("just before again");
 				logger.info("the working"+workingPool.size());
 		    	this.printAllPosition(workingPool);
-		    	logger.info("the node"+node.pool.size());
-		    	this.printAllPosition(node.pool);
-				if (!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_FRONT)) {
+		    	logger.info("the node"+node.positionPool.size());
+		    	this.printAllPosition(node.positionPool);
+				if (!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_FRONT)) {
 					Node newNode = node.getNewNode(RELATIVE_FRONT);
-					if (canThisActionDistinguish(node.pool, RELATIVE_FRONT)) {
-						newNode.printPathFound();
+					if (canThisActionDistinguish(node.positionPool, RELATIVE_FRONT)) {
 						logger.info("action chosen"+RELATIVE_FRONT);
-						return newNode.getActionTakenToRoot();
+						return newNode.getActionTakenInRootNode();
 					}
 					newList.add(newNode);
 				}
-				if (!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_BACK)){
+				if (!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_BACK)){
 					Node newNode = node.getNewNode(RELATIVE_BACK);
-					if (canThisActionDistinguish(node.pool, RELATIVE_BACK)) {
-						newNode.printPathFound();
+					if (canThisActionDistinguish(node.positionPool, RELATIVE_BACK)) {
 						logger.info("action chosen"+RELATIVE_BACK);
-						return newNode.getActionTakenToRoot();
+						return newNode.getActionTakenInRootNode();
 					}
 					newList.add(newNode);
 				}
-				if(!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_LEFT)) {
+				if(!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_LEFT)) {
 					Node newNode = node.getNewNode(RELATIVE_LEFT);
-					if (canThisActionDistinguish(node.pool, RELATIVE_LEFT) ) {
-						newNode.printPathFound();
+					if (canThisActionDistinguish(node.positionPool, RELATIVE_LEFT) ) {
 						logger.info("action chosen"+RELATIVE_LEFT);
-						return newNode.getActionTakenToRoot();
+						return newNode.getActionTakenInRootNode();
 					}
 					newList.add(newNode);
 				}
-				if(!isRelativeOccupied(node.pool.iterator().next(), RELATIVE_RIGHT)) {
+				if(!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_RIGHT)) {
 					Node newNode = node.getNewNode(RELATIVE_RIGHT);
-					if (canThisActionDistinguish(node.pool, RELATIVE_RIGHT)) {
-						newNode.printPathFound();
+					if (canThisActionDistinguish(node.positionPool, RELATIVE_RIGHT)) {
 						logger.info("action chosen"+RELATIVE_RIGHT);
-						return newNode.getActionTakenToRoot();
+						return newNode.getActionTakenInRootNode();
 					}
 					newList.add(newNode);
 				}
@@ -1032,30 +965,32 @@ public class EnvController extends Environment {
     
     
     
-    // belief: color()
-    // colors are red = critical, blue, green
-    
-    
-    // this class was totally designed for testing before applying to real robots
+    // the simulation class: provide a simulation environment (for testing without robot)
     class Simulation {
-    	// to do: random generation -> automatic testin
     	public Location[] realVictims; 
     	public Position realPos;
     	private Simulation(EnvModel envModel) {
+    		realVictims = generateRandomLocsOfRealVictims();
+    		realPos = generateRandomStartingPosition();
+    	}
+    	
+    	// generate locations of real victims randomly
+    	public Location[] generateRandomLocsOfRealVictims() {
     		List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
     		Collections.shuffle(list);
-    		//realVictims = new Location[]{list.get(0),list.get(1),list.get(2)};
-    		// red blue green
-    		realVictims = new Location[]{new Location(1,1),new Location(5,1),new Location(3,4)};
-    		logger.info("First real victim = "+list.get(0));
-    		logger.info("Second real victim = "+list.get(1));
-    		logger.info("Third real victim = "+list.get(2));
-    		// generate random heading
+    		logger.info("Red: "+list.get(0).toString());
+    		logger.info("Blue: "+list.get(0).toString());
+    		logger.info("Green: "+list.get(0).toString());
+    		return new Location[]{list.get(0),list.get(1),list.get(2)};
+    	}
+    	
+    	// generate a starting position randomly
+    	public Position generateRandomStartingPosition() {
+    		// generate heading
     		List<String> headingList = Arrays.asList(new String[]{LEFT,RIGHT,UP,DOWN});
     		Collections.shuffle(headingList);
-   
-    		String heading = headingList.get(1);
-    		// generate random position
+    		String heading = headingList.get(2);
+    		// generate location
     		int x=1, y=1;
     		while (true) {
     			Random rn = new Random();
@@ -1067,250 +1002,80 @@ public class EnvController extends Environment {
     				break;
     			}
     		}
-    		realPos = new Position(x,y,heading);
-    		realPos = new Position(1,5,"up");
-    		//realPos = new Position(4,5,"down");
-    		// index -> severity
+    		return new Position(x,y,heading);
     	}
     	
-    	// simulation -> these methods should be implemented in robots using sensor
-    	
-    	// jinke's trash
-    	public boolean isUpOccupied() {
-    		return isOccupied(realPos.getX(), realPos.getY()-1);
-    	}
-    	
-    	public boolean isDownOccupied() {
-    		return isOccupied(realPos.getX(), realPos.getY()+1);
-    	}
-		
-    	public boolean isRightOccupied() {
-    		return isOccupied(realPos.getX()+1, realPos.getY());	
-		}
-		
-    	public boolean isLeftOccupied() {
-			return isOccupied(realPos.getX()-1, realPos.getY());
-		}
-    	
-
-
-    	
-    	// rFront[0], rBack[1], rLeft[2], rRight[3]
-    	
-    	public String getGridColor() {
+    	public void getColorFromSimulation() {
+    		String color;
     		if (containsPercept(DETERMINED_LOC)) realPos = model.getPosition();
     		if (realPos.getLoc().equals(realVictims[0])) {
-    			return RED;
+    			color = RED;
     		} else if (realPos.getLoc().equals(realVictims[1])) {
-    			return BLUE;
+    			color = BLUE;
     		} else if (realPos.getLoc().equals(realVictims[2])){
-    			return GREEN;
+    			color = GREEN;
     		} else {
-    			return WHITE;
+    			color = WHITE;
     		}
+    		System.out.println("Simulation: The color is " + color);
+    		addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     	}
+        
+        public void getOccupiedInfoFromSimulation() {
+    	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
+    		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
+    	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
+    	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
+        }
     }
     
-    
+    // Node class: for breadth first search
     class Node {
-    	public HashSet<Position> pool;
-    	Node fatherNode;
-    	int actionTakenToFather;
-    	@SuppressWarnings("unchecked")
-		public Node(HashSet<Position> thePool, int action) {
-    		pool = (HashSet<Position>) thePool.clone();
-    		actionTakenToFather = action;
-    		fatherNode = null;
+    	
+    	public HashSet<Position> positionPool;
+    	
+    	// father node: one action is taken in father node, leading to this node
+    	Node father;
+    	
+    	// action taken in father node
+    	int action;
+    	
+		public Node(HashSet<Position> thePool, int theAction) {
+    		positionPool = (HashSet<Position>) thePool.clone();
+    		action = theAction;
     	}
 
 		void setFatherNode(Node theFatherNode) {
-    		this.fatherNode = theFatherNode;
+    		this.father = theFatherNode;
     	}
+		
     	Node getFatherNode() {
-    		return fatherNode;
+    		return father;
     	}
-    	int getActionTakenToFather() {
-    		return actionTakenToFather;
+    	
+    	int getActionTakenInFatherNode() {
+    		return action;
     	}
-    	int getActionTakenToRoot() {
-    		int action = getActionTakenToFather();
+    	
+    	// via this tree search, we only want to know one step to move
+    	int getActionTakenInRootNode() {
+    		int action = getActionTakenInFatherNode();
     		Node father = getFatherNode();
-    		logger.info(father+"");
     		while (father.getFatherNode() != null) {
-    			action = father.getActionTakenToFather();
+    			action = father.getActionTakenInFatherNode();
     			father = father.getFatherNode();
     		}
     		return action;
     	}
+    	
+    	// get a new node by taking an action in the current node
     	public Node getNewNode(int action) {
-    		logger.info("before get new");
-    		printAllPosition(this.pool);
-    		@SuppressWarnings("unchecked")
-			HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.pool.clone(), action);
+			HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.positionPool.clone(), action);
     		Node newNode = new Node(newPool,action);
     		newNode.setFatherNode(this);
-    		logger.info("before get new");
-    		printAllPosition(this.pool);
     		return newNode;
     	}
-    	public void printPathFound() {
-    		if (this.fatherNode==null) return;
-    		int action = this.actionTakenToFather;
-    		Node father = this.fatherNode;
-    		logger.info(action+"->");
-    		while (father.getFatherNode()!=null){
-    			action = father.getActionTakenToFather();
-    			logger.info(action+"->");
-    			father = father.getFatherNode();
-    		}
-    	}
     }
 }
-
-
-
-/* rubbish 
-
-class Model extends GridWorldModel {
-	private String heading = "down";
-	
-	String getHeading() {
-		return heading;
-	}
-	
-    private Model() {
-        super(W_GRID, H_GRID, 1);
-        setAgPos(SCOUT_ID, 1, 1);
-        addInitialBeliefs();
-    }
-    
-    // add initial beliefs 
-    void addInitialBeliefs() {
-    	
-    }
-    
-    
-    
-    
-    
-    //     Internal Actions   
-    
-    
- 	// if possible, go down, if impossible, go right, if impossible, go left, if impossible, go up
-    
-    // now everything is in simulation, but eventually, these methods should control robots in real world
-    
-    
-    // 0 - down, 1 - right, 2 - left, 3 - up
-    void move(String direction) {
-    	Location scoutLoc = getAgPos(0);
-        switch (direction) {
-		case DOWN:
-			scoutLoc.y += 1;
-			heading = "down";
-			break;
-		case RIGHT:
-			scoutLoc.x += 1;
-			heading = "right";
-			break;
-		case LEFT:
-			scoutLoc.x -= 1;
-			heading = "left";
-			break;
-		case UP:
-			scoutLoc.y -= 1;
-			heading = "up";
-			break;
-		}
-        if (new java.util.Random().nextFloat() > 0.5) {
-        	strangeTurn();
-        }
-        setAgPos(0, scoutLoc);
-        updatePercepts();
-    }
-    
-    void strangeTurn() {
-    	switch(heading) {
-    	case "down":
-    		heading = "left";
-    		break;
-    	case "up":
-    		heading = "right";
-    		break;
-    	case "left":
-    		heading = "up";
-    		break;
-    	case "right":
-    		heading = "down";
-    		break;
-    	}
-    }
-    
-    void rotateTo(int newHeading) {
-    	
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // a stupid strategy -> if can, move down; can't, turn left
-    
-    
-    // get informaiton from robots and translate it into beliefs
-    void getPercepts() {
-    	if (simulation.isDownOccupied()) {
-    		logger.info("Down occpuied");
-    		addPercept(OCCUPIED_DOWN);
-    	}
-    	if (simulation.isLeftOccupied()){
-    		logger.info("left occpuied");
-    		addPercept(OCCUPIED_LEFT);
-    	}
-    	if (simulation.isRightOccupied()){
-    		logger.info("right occpuied");
-    		addPercept(OCCUPIED_RIGHT);
-    	}
-    	if (simulation.isUpOccupied()){
-    		logger.info("Up occpuied");
-    		addPercept(OCCUPIED_UP);
-    	}
-    }
-    
-    // if no belief of the current state is possible, then do localization again -> there may be some mistakes
-    
-    
-    //      Internal Actions 
-}
-
-*/
-
-/*
-	else if (action.toString().equals("turn(90)")) {
-            	logger.info("previous: " + envModel.heading);
-            	switch(envModel.heading) {
-            	case "down":
-            		envModel.heading = "right";
-            		break;
-            	case "up":
-            		envModel.heading = "left";
-            		break;
-            	case "left":
-            		envModel.heading = "down";
-            		break;
-            	case "right":
-            		envModel.heading = "up";
-            		break;
-            	}
-            	logger.info("turn to" + envModel.heading);
-            	updatePercepts();
-            }
-
- */
 
 

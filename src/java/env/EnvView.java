@@ -22,12 +22,12 @@ import jason.environment.grid.GridWorldView;
 	    private static final String DOWN = "down";
 	    private static final String LEFT = "left";
 	    private static final String RIGHT = "right";
-	    private EnvController controller;
+	    private Playground controller;
 	    
 	    //private EnvController controller;
 	    private EnvModel envModel;
 	    
-		public EnvView(EnvModel model, EnvController controller) {
+		public EnvView(EnvModel model, Playground controller) {
             super(model, "Children's Playground", 600);
             envModel = model;
             //this.controller = controller;
@@ -59,7 +59,7 @@ import jason.environment.grid.GridWorldView;
             		drawPotentialVictim(g, x, y); 
             		break;
         	}
-        	if (!controller.containsPercept(EnvController.DETERMINED_LOC)) drawClones(g);
+        	if (!controller.containsPercept(Playground.DETERMINED_LOC)) drawClones(g);
         }
         
         /*

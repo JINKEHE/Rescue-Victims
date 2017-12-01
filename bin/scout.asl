@@ -1,58 +1,17 @@
-// Agent sample_agent in project optmistor
-
-/* Initial beliefs and rules */
-
-/* Initial goals */
-
-
-/* internal actions */
-
-
-/* list of Plans */
-
-/*
- *         name                 functinality
- * 
- *         start                get everything started
- * 
- *        
- */
- 
-/* list of beliefs */ 
-
-/*
- *         name                 functinality
- *	       
- *         determined(location)	   
- *  
- *         color(x) 
- * 
- * 		   pos(x,y,heading)
- * 
- *   
- *		   occupied()
- * 
- *         bestAction()
- * 
- *         nextMove()	   
- *        
- */
-
+// counters
 x(0).
 y(0).
 
-/* start of initial beliefs here */
+delay(500).
 
-/* end of initial beliefs here */
+// the scout does not have any initial beliefs, but the doctor will tell it
++task(finished) <- 
+	.print("nice! doctor asked me to stop working."); 
+	?delay(Delay); 
+	.wait(Delay).
 
-// Communication
-
-
-+task(finished)<- .print("nice! doctor asked me to stop working."); .wait(1000).
-
-
-+!init(wall): true
-	<- 
+// add walls
++!init(wall) <- 
 	while(x(X) & width(W) & X<=W-1) {
 		?height(H); 
     	+wall(X,0);
@@ -69,22 +28,28 @@ y(0).
 	-+y(0);
 	+addWall(finished).
 
-+!start : true 
-	<- 
+// start the mission
++!start : true <- 
 	.print("Doctor told me to get started."); 
-	.print("try to add all posible positiosn to the belief base");
 	!init(wall);
-	//.wait(5000);
-	//.findall(wall(A,),wall(A,B),L)
-	//.count(L,ZZ)
-	//.print("wall length",ZZ)
+	// add all the posible positions to the belief base
 	add(all);
-	//.wait({+initEnv(finished)[source(doctor)]});
-	//!addAll(possiblePos);
 	run(simulation);
 	!remove(impossible);
 	!scan(around);  
 	.print("Where am I? I started to do localization.");
+	!do(localization).
+
+/* do localization */
+
++!do(localization) : determined(location) 
+	<- .print("Localization finished."); 
+	.send(doctor, tell, determined(location)).	
+
++!do(localization) : not determined(location) 
+	<- ?bestAction(X); 
+	execute(X); 
+	!scan(around); 
 	!do(localization).
 
 +!addAll(possiblePos) <- 
@@ -128,61 +93,41 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 //+!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
 +!check(localization).
 
-+!do(localization) : determined(location) 
-	<- .print("Now I know where I am. Localization finished."); 
-	//plan(path);
-	.send(doctor, tell, determined(location)).	
-	//!do(task).
 
-+!do(localization) : not determined(location) 
-	<- ?bestAction(X); 
-	execute(X); 
-	!scan(around); 
-	!do(localization).
 
-/* 
-+!analyze(color): pos(X,Y,Z)
-	<-.send(doctor,askOne,potentialVictim(X,Y),Reply);
-	if (not Reply=false){
-		detect(env); 
-		.print("started to test color");
-		.wait(1000);
-		?color(C);
-		.print("finished to test color");
-		!found(C,X,Y); 
-		updateModel(C,X,Y);
-		.wait(1000);
-	}.
-*/
-
-// doctor will ask scout to analyze color
+/* analyze the color of the grid */
 +!analyze(color) <- 
 	?pos(X,Y,Z)
 	get(color);
-	.wait(1000);
+	?delay(Delay);
+	.wait(Delay);
 	?color(C);
 	!found(C,X,Y);
 	updateModel(C,X,Y);
-	.wait(1000);
+	.wait(Delay);
 	.send(doctor,achieve,after(analysis)).
 	
-// doctor will tell scout how to move
-+!moveTo(X) <- move(X); .wait(1000); .send(doctor,achieve,after(move)).
+/* move to a grid next to the robot according to the relative direction */
++!moveTo(X) <- 
+	move(X); 
+	?delay(Delay); 
+	.wait(Delay); 
+	.send(doctor,achieve,after(move)).
 
-+!found(blue,X,Y): true 
-	<- 
+/* when color papers are found */
++!found(blue,X,Y) <- 
 	.send(doctor,tell,blue(X,Y)); 
 	.print("Serious victim found.").
 
-+!found(red,X,Y): true 
-	<-.send(doctor,tell,red(X,Y)); 
++!found(red,X,Y) <-
+	.send(doctor,tell,red(X,Y)); 
 	.print("Criticial victim found").
 
-+!found(green,X,Y): true 
-	<-.send(doctor,tell,green(X,Y)); 
++!found(green,X,Y) <-
+	.send(doctor,tell,green(X,Y)); 
 	.print("Minor victim found").
 
-+!found(white,X,Y): true 
-	<-.send(doctor,tell,white(X,Y)); 
++!found(white,X,Y) <-
+	.send(doctor,tell,white(X,Y)); 
 	.print("No victim here.",X,",",Y).
 

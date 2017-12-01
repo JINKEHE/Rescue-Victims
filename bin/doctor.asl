@@ -1,41 +1,43 @@
 // Agent doctor in project optmistor
 
-/* Initial beliefs and rules */
+/* START OF initial beliefs for demonstration */
 
+// basic info about the arena
 width(7).
 height(8).
 
-man(tom).
+// the locations of obstacles
+obstacle(4,1).
+obstacle(2,3).
+obstacle(1,2).
+obstacle(3,5).
+
+// the locations of potential victims
+potentialVictim(3,3).
+potentialVictim(4,2).
+potentialVictim(2,5).
+potentialVictim(5,1).
+potentialVictim(5,6).
+
+/* END OF initial beliefs for demonstration */
+
+/* initial beliefs */
+
+// counters
 x(0).
 y(0).
 
-/* Initial goals */
-obstacle(1,1).
-obstacle(2,1).
-obstacle(3,1).
-obstacle(1,2).
-potentialVictim(2,2).
-potentialVictim(3,2).
-potentialVictim(4,1).
-potentialVictim(5,5).
-potentialVictim(2,4).
-
+// object values in the model
 objectValue(wall,128).
 objectValue(obstacle,16).
 objectValue(potentialVictim,32).
 
+delay(500).
+
+/* end of initial beliefs */
+
 !start.
 
- 
-+wall(X,Y) <- ?objectValue(wall,WALL).
-+obstacle(X,Y) <- ?objectValue(obstacle,OBSTACLE).
-+potentialVictim(X,Y) <- ?objectValue(potentialVictim,POTENTIAL_VICTIM).
-
-/*
-+wall(X,Y) <- ?objectValue(wall,WALL).
-+obstacle(X,Y) <- ?objectValue(obstacle,OBSTACLE).
-+potentialVictim(X,Y) <- ?objectValue(potentialVictim,POTENTIAL_VICTIM).
-*/
 +!init(wall): true
 	<- 
 	while(x(X) & width(W) & X<=W-1) {
@@ -56,10 +58,10 @@ objectValue(potentialVictim,32).
 /* Plans */
 
 +!start : true <-
-	//test(com);
 	!init(wall);
 	!tell(scout,env);
-	.wait(2000);
+	?delay(Delay);
+	.wait(Delay);
 	!build(model);
 	.print("I started to work."); 
 	.print("I told scout to start working.");
@@ -105,17 +107,16 @@ objectValue(potentialVictim,32).
 
 +task(finished) <- .wait(50000); .print("task finished."); stop(everything).
 
+/* when color papers are found */
 +red(X,Y) <- -potentialVictim(X,Y); !check(mission).
 +green(X,Y) <- -potentialVictim(X,Y); !check(mission).
 +blue(X,Y) <- -potentialVictim(X,Y);  !check(mission).
 +white(X,Y) <- -potentialVictim(X,Y); !check(mission).
 
+/* check whether the mission can be ended now */
 +!check(mission): red(_,_) & blue(_,_) & green(_,_) <- 
 	!remove(restPotentialVictims);
-	.wait(500);
-	+task(finished);
-	//.send(scout,tell,task(finished));
-	.wait(500).
+	+task(finished).
 
 +!remove(restPotentialVictims)<-
 	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List);
@@ -130,8 +131,4 @@ objectValue(potentialVictim,32).
 +!do(plan) <- 
 	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List); 
 	plan(List).
-
-//+red(X,Y)[source(scout)] <- +red(X,Y); -potentialVictim(X,Y).
-//+green(X,Y)[source(scout)] <- +green(X,Y).
-//+blue(X,Y)[source(scout)] <- +blue(X,Y).
 
