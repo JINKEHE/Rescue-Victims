@@ -2,7 +2,7 @@
 
 /* Initial beliefs and rules */
 
-width(9).
+width(7).
 height(8).
 
 man(tom).
@@ -70,7 +70,7 @@ objectValue(potentialVictim,32).
 
 +!do(mission) : pos(X,Y,Z) & potentialVictim(X,Y) <- .send(scout,achieve,analyze(color)).
 +!do(mission) <- !after(analysis).
-+!after(analysis) : not task(finished) <- get(nextMove); ?bestMove(X); .send(scout,achieve,moveTo(X)).
++!after(analysis) : not task(finished) <- get(nextMove); .wait(1000); ?bestMove(X); .send(scout,achieve,moveTo(X)).
 +!after(move) : not task(finished) <- !do(mission).	
 +!after(analysis) : task(finished) <- !after(analysis).
 +!after(move) : task(finished) <- !after(move).	
@@ -83,10 +83,18 @@ objectValue(potentialVictim,32).
 +white(X,Y) <- -potentialVictim(X,Y); !check(mission).
 
 +!check(mission): red(_,_) & blue(_,_) & green(_,_) <- 
+	!remove(restPotentialVictims);
+	.wait(500);
 	+task(finished);
-	-potentialVictim(_,_);
 	//.send(scout,tell,task(finished));
 	.wait(500).
+
++!remove(restPotentialVictims)<-
+	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List);
+	for(.member(potentialVictim(A,B),List)) {
+		-potentialVictim(A,B);
+		updateModel(white,A,B);
+	}.
 	
 +!check(mission) <- 
 	!do(plan).

@@ -111,7 +111,8 @@ if (not wall(X,Y) & not obstacle(X,Y)){
 }.
 
 +!scan(around): true
-	<- detect(env);
+	<- get(color);
+	get(occupied);
 	!remove(impossible);
 	remove(impossible);
 	!check(localization).
@@ -157,7 +158,7 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 // doctor will ask scout to analyze color
 +!analyze(color) <- 
 	?pos(X,Y,Z)
-	detect(env);
+	get(color);
 	.wait(1000);
 	?color(C);
 	!found(C,X,Y);

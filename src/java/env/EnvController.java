@@ -35,7 +35,7 @@ public class EnvController extends Environment {
 	private static final String SCOUT = "scout";
 	private static final String DOCTOR = "doctor";
 	
-	private static final int W_GRID = 7 + 2;
+	private static final int W_GRID = 5 + 2;
 	private static final int H_GRID = 6 + 2;
 	
 	static final Literal test = Literal.parseLiteral("test");
@@ -87,6 +87,8 @@ public class EnvController extends Environment {
     private EnvView view;
     private Simulation simulation;
     
+    private boolean simu = false;
+    
     public static final Literal goScout = Literal.parseLiteral("go(next)");
 
     
@@ -103,6 +105,7 @@ public class EnvController extends Environment {
     BufferedReader receiveRead;
     
 
+    // TODO get info from doctor
     public void init(String[] args) {
     	
     	// add initial beliefs here in the demo
@@ -115,9 +118,14 @@ public class EnvController extends Environment {
         view = new EnvView(model, this);
         model.setView(view);
         //simulation = new Simulation(model);
-        logger.setLevel(Level.WARNING);
+        //logger.setLevel(Level.WARNING);
         
     }
+    
+    public void initModel() {
+    	
+    }
+    
   //addInitialBeliefs(obstacles, possibleVictims);
     /*
     public void addInitialBeliefs(Location[] obstacles, Location[] possibleVictims) {
@@ -175,6 +183,7 @@ public class EnvController extends Environment {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println("Reply: " + reply);
 		return reply;
 	}
     
@@ -192,9 +201,17 @@ public class EnvController extends Environment {
     public void buildSock() {
     		System.out.println("Server ready to send command");
     		try {
-				sersock = new ServerSocket(18888);
-				System.out.println(sersock.getLocalSocketAddress());
-				sock = sersock.accept();
+				boolean connected = false;
+				while (!connected) {
+					try {
+						sock = new Socket("10.0.1.1",18888);
+						connected = true;
+						logger.info("connected");
+					} catch(Exception e) {
+						
+					}
+				}
+				
 				keyRead = new BufferedReader(new InputStreamReader(System.in));
 				ostream = sock.getOutputStream(); 
 				pwrite = new PrintWriter(ostream, true);
@@ -231,13 +248,18 @@ public class EnvController extends Environment {
     		} else if (action.getFunctor().equals(EXECUTE)) {
         		Thread.sleep(DELAY);
     			moveBeforeLocalization(action.getTerm(0).toString());
-    		} else if (action.equals(DETECT_ENV)) {
-    			getEnvInfo();
+    		} else if (action.equals(Literal.parseLiteral("get(color)"))) {
+    			if (simu==true) {
+    				this.getColorFromSimulation();
+    			} else {
+    				this.getColorFromRobot();
+    			}
+    			view.repaint();
     		} else if (action.equals(STOP)) {
     			stop();
     		} else if (action.getFunctor().equals("move")) {
         		Thread.sleep(DELAY);
-    			move(action.getTerm(0).toString());
+    			moveAfterLocalization(action.getTerm(0).toString());
     		} else if (action.getFunctor().equals("updateModel")) {
     			updateModel(action.getTerm(0).toString(), action.getTerm(1).toString(), action.getTerm(2).toString());
     		} else if (action.getFunctor().equals("plan")) {
@@ -252,9 +274,22 @@ public class EnvController extends Environment {
             	this.buildSock();
         		this.sendCommand("jeff's success");
         	} else if (action.equals(Literal.parseLiteral("run(simulation)"))){
-        		simulation = new Simulation(model);
+        		if (simu == false) {
+            		buildSock(); // this line should be deleted
+            	} else {
+            		simulation = new Simulation(model);
+            	}
+        		//simulation = new Simulation(model);
+
         	} else if (action.equals(Literal.parseLiteral("get(nextMove)"))){
     			this.offerBfestMove();
+    		} else if (action.equals(Literal.parseLiteral("get(occupied)"))){
+    			if (simu==true) {
+    				this.getOccupiedInfoFromSimulation();
+    			} else {
+    				this.getOccpuiedInfoFromRobot();
+    			}
+    			view.repaint();
     		} else {
     			return false;
     		}
@@ -359,7 +394,11 @@ public class EnvController extends Environment {
     public void moveBeforeLocalization(String actionStr) {
     	int action = Integer.valueOf(actionStr);
     	logger.info("execute" + action);
-    	orderRobotToMove(action); // this line should be deleted
+    	if (simu == false) {
+    		moveRobot(action); // this line should be deleted
+    	} else {
+    		moveSimulation(action);
+    	}
     	for (Position poss : model.possiblePosition) poss.relativeMove(action);
     	this.updatePercepts();
 
@@ -368,8 +407,51 @@ public class EnvController extends Environment {
     	//this.removePerceptsByUnif(Literal.parseLiteral("color(_)"));
     }
     
-    public void orderRobotToMove(int action) {
+    public void moveAfterLocalization(String direction) {
+    	int action = this.absoluteToRelative(direction, model.heading);
+    	if (simu == false) {
+    		moveRobot(action); // this line should be deleted
+    	} else {
+    		moveSimulation(action);
+    	}
+    	System.out.println("want to move" + direction);
+    	Location scoutLoc = model.getAgPos(SCOUT_ID);
+        switch (direction) {
+		case DOWN:
+			scoutLoc.y += 1;
+			model.heading = DOWN;
+			break;
+		case RIGHT:
+			scoutLoc.x += 1;
+			model.heading = RIGHT;
+			break;
+		case LEFT:
+			scoutLoc.x -= 1;
+			model.heading = LEFT;
+			break;
+		case UP:
+			scoutLoc.y -= 1;
+			model.heading = UP;
+			break;
+		}
+        model.setAgPos(0, scoutLoc);
+        model.heading = direction;
+        if (simu == true) {
+        	simulation.realPos = model.getPosition();
+        }
+        this.clearAllPercepts();
+        view.repaint();
+    	this.addPercept(model.getPosition().toLiteral());
+    }
+    
+   
+    public void moveSimulation(int action) {
     	simulation.realPos.relativeMove(action); 
+    }
+    
+    public void moveRobot(int action) {
+    	//simulation.realPos.relativeMove(action); 
+    	this.sendCommand("move("+action+")");
     }
     
     public void stop() {
@@ -440,57 +522,56 @@ public class EnvController extends Environment {
     
 
     
-    void move(String direction) {
-    	System.out.println("want to move" + direction);
-    	Location scoutLoc = model.getAgPos(SCOUT_ID);
-        switch (direction) {
-		case DOWN:
-			scoutLoc.y += 1;
-			model.heading = DOWN;
-			break;
-		case RIGHT:
-			scoutLoc.x += 1;
-			model.heading = RIGHT;
-			break;
-		case LEFT:
-			scoutLoc.x -= 1;
-			model.heading = LEFT;
-			break;
-		case UP:
-			scoutLoc.y -= 1;
-			model.heading = UP;
-			break;
-		}
-        model.setAgPos(0, scoutLoc);
-        model.heading = direction;
-        simulation.realPos = model.getPosition();
-        this.clearAllPercepts();
-        view.repaint();
-    	this.addPercept(model.getPosition().toLiteral());
-    }
+
     
     // we are going to modify this part to connect to the robot
     void getEnvInfo() {
     	view.repaint();
     	// before localization finished
     	if (!this.containsPercept(DETERMINED_LOC)) {
+    		if (simu == false) {
         	getColorFromRobot();
         	logger.info("got color from robot");
         	getOccpuiedInfoFromRobot();
         	logger.info("got occupany info from robot");
+    		} else {
+    			getColorFromSimulation();
+    			getOccupiedInfoFromSimulation();
+    		}
     	} else {
+    		if (simu==false){
     		getColorFromRobot();
+    		} else {
+    			getColorFromSimulation(); 	 
+    		}
     	}
     	view.repaint();
+    }
+    
+    void getOccupiedInfoFromSimulation() {
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
+		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
+	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
     }
     
 	// !!! this method should be modified !!! �$%^&*())))(*&^%$�$%^&*(*&^%$%^&*
     void getOccpuiedInfoFromRobot() {
     	// this data should be from the robot
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
-		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
-	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
+    	// a binary string [front,back,left,right]
+//	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_FRONT)) addPercept(SCOUT,OCCUPIED_FRONT);
+//		if (isRelativeOccupied(simulation.realPos, RELATIVE_BACK)) addPercept(SCOUT,OCCUPIED_BACK);
+//	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_LEFT)) addPercept(SCOUT,OCCUPIED_LEFT);
+//	   	if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT)) addPercept(SCOUT,OCCUPIED_RIGHT);
+    	String binaryResult = this.sendCommand("get(occupied)");
+    	boolean frontOccupied = binaryResult.charAt(0) == '0' ? false : true;
+    	boolean backOccupied = binaryResult.charAt(1) == '0' ? false : true;
+    	boolean leftOccupied = binaryResult.charAt(2) == '0' ? false : true;
+    	boolean rightOccupied = binaryResult.charAt(3) == '0' ? false : true;
+    	if (frontOccupied) addPercept(SCOUT,OCCUPIED_FRONT);
+ 		if (backOccupied) addPercept(SCOUT,OCCUPIED_BACK);
+	   	if (leftOccupied) addPercept(SCOUT,OCCUPIED_LEFT);
+	   	if (rightOccupied) addPercept(SCOUT,OCCUPIED_RIGHT);
     }
     
     String getColorInBeliefBase() {
@@ -508,56 +589,49 @@ public class EnvController extends Environment {
     	String color = getColorInBeliefBase();
     	// remove impossible positiosn according to the occupancy information and the color of the grid
 		HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
-		logger.info("new real="+simulation.realPos.toString());
+		//logger.info("new real="+simulation.realPos.toString());
 		//logger.info("before removing");
 		//if (model.possiblePosition.size() <= 20) this.printAllPosition(model.possiblePosition);
 		for (Position pos: model.possiblePosition) {
 	   		if (containsPercept(SCOUT,OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
-	   			logger.info("");
-	   			if (pos.equals(simulation.realPos)) {
-		   			logger.info("contain"+containsPercept(OCCUPIED_FRONT));
-		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_FRONT));
-	   				logger.info("meila front\n\n\n\n");
-	   			}
-
 	   			clonePool.remove(pos);
 	   			continue;
 	   		} 
 	   		if (containsPercept(SCOUT,OCCUPIED_BACK) != isRelativeOccupied(pos, RELATIVE_BACK)) {
-	   			if (pos.equals(simulation.realPos)){
-	   				logger.info("contain"+containsPercept(OCCUPIED_BACK));
-		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_BACK));
-	   				logger.info("meila back\n\n\n\n\n");
-	   			}
+//	   			if (pos.equals(simulation.realPos)){
+//	   				logger.info("contain"+containsPercept(OCCUPIED_BACK));
+//		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_BACK));
+//	   				logger.info("meila back\n\n\n\n\n");
+//	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}  
 	   		if (containsPercept(SCOUT,OCCUPIED_LEFT) != isRelativeOccupied(pos, RELATIVE_LEFT)) {
-	   			if (pos.equals(simulation.realPos)){
-	   				logger.info("meila left\n\n\n\n");
-	   				logger.info("contain"+containsPercept(OCCUPIED_LEFT));
-		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_LEFT));
-	   			}
+//	   			if (pos.equals(simulation.realPos)){
+//	   				logger.info("meila left\n\n\n\n");
+//	   				logger.info("contain"+containsPercept(OCCUPIED_LEFT));
+//		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_LEFT));
+//	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}  
 	   		if (containsPercept(SCOUT,OCCUPIED_RIGHT) != isRelativeOccupied(pos, RELATIVE_RIGHT)) {
-	   			if (pos.equals(simulation.realPos)) {
-	   				logger.info("meila right\n\n\n\n\n\n");
-	   				logger.info("contain"+containsPercept(OCCUPIED_RIGHT));
-		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_RIGHT));
-	   			}
+//	   			if (pos.equals(simulation.realPos)) {
+//	   				logger.info("meila right\n\n\n\n\n\n");
+//	   				logger.info("contain"+containsPercept(OCCUPIED_RIGHT));
+//		   			logger.info("real"+isRelativeOccupied(pos, RELATIVE_RIGHT));
+//	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
 	   			continue;
 	   		}
 	   		if (!getColorAt(pos.getLoc()).equals(POSSIBLE) && !getColorAt(pos.getLoc()).equals(color)) {
-	   			logger.info("meila color\n\n\n\n\n\n");
-	   			if (pos.equals(simulation.realPos)){
-	   				logger.info("meila color\n\n\n\n\n\n");
-	   			}
+//	   			logger.info("meila color\n\n\n\n\n\n");
+//	   			if (pos.equals(simulation.realPos)){
+//	   				logger.info("meila color\n\n\n\n\n\n");
+//	   			}
 	   			clonePool.remove(pos);
 	   			this.removePercept(SCOUT, pos.toLiteral());
 				continue;
@@ -656,7 +730,19 @@ public class EnvController extends Environment {
     	view.repaint();
     }*/
     
+//    public void getColorFromSimulation() {
+//    	String color = simulation.getGridColor();
+//    	System.out.println("the color I got is " + color);
+//    	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
+//    }
+    
     public void getColorFromRobot() {
+    	String color = this.sendCommand("get(color)");
+    	System.out.println("the color I got is " + color);
+    	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
+    }
+    
+    public void getColorFromSimulation() {
     	String color = simulation.getGridColor();
     	System.out.println("the color I got is " + color);
     	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
@@ -752,6 +838,67 @@ public class EnvController extends Environment {
 	    double diffNum = new HashSet<String>(results).size();
 	    logger.info("diff num"+diffNum);
 	    return diffNum>1;
+    }
+    
+    // TODO we need two methods: absolute to relative, relative to absolute
+    // and the world will become better
+    public int absoluteToRelative(String absDir, String heading) {
+    	switch(heading) {
+    	case UP:{
+    		if (absDir.equals(UP)) return RELATIVE_FRONT;
+    		if (absDir.equals(DOWN)) return RELATIVE_BACK;
+    		if (absDir.equals(LEFT)) return RELATIVE_LEFT;
+    		if (absDir.equals(RIGHT)) return RELATIVE_RIGHT;
+    	}
+    	case DOWN:{
+    		if (absDir.equals(UP)) return RELATIVE_BACK;
+    		if (absDir.equals(DOWN)) return RELATIVE_FRONT;
+    		if (absDir.equals(LEFT)) return RELATIVE_RIGHT;
+    		if (absDir.equals(RIGHT)) return RELATIVE_LEFT;
+    	}
+    	case LEFT: {
+    		if (absDir.equals(UP)) return RELATIVE_RIGHT;
+    		if (absDir.equals(DOWN)) return RELATIVE_LEFT;
+    		if (absDir.equals(LEFT)) return RELATIVE_FRONT;
+    		if (absDir.equals(RIGHT)) return RELATIVE_BACK;
+    	}
+        case RIGHT:
+        	if (absDir.equals(UP)) return RELATIVE_LEFT;
+    		if (absDir.equals(DOWN)) return RELATIVE_RIGHT;
+    		if (absDir.equals(LEFT)) return RELATIVE_BACK;
+    		if (absDir.equals(RIGHT)) return RELATIVE_FRONT;
+    	}
+    	return -1;
+    }
+    
+    // TODO Convert Relative direction to Absolute Direction
+    public String relativeToAbsolute(int relDir, String heading) {
+    	switch(heading) {
+    	case UP:{
+    		if (relDir == RELATIVE_FRONT) return UP;
+    		if (relDir == RELATIVE_BACK) return DOWN;
+    		if (relDir == RELATIVE_LEFT) return LEFT;
+    		if (relDir == RELATIVE_RIGHT) return RIGHT;
+    	}
+    	case DOWN:{
+    		if (relDir == RELATIVE_BACK) return UP;
+    		if (relDir == RELATIVE_FRONT) return DOWN;
+    		if (relDir == RELATIVE_RIGHT) return LEFT;
+    		if (relDir == RELATIVE_LEFT) return RIGHT;
+    	}
+    	case LEFT: {
+    		if (relDir == RELATIVE_RIGHT) return UP;
+    		if (relDir == RELATIVE_LEFT) return DOWN;
+    		if (relDir == RELATIVE_FRONT) return LEFT;
+    		if (relDir == RELATIVE_BACK) return RIGHT;
+    	}
+        case RIGHT:
+        	if (relDir == RELATIVE_LEFT) return UP;
+    		if (relDir == RELATIVE_RIGHT) return DOWN;
+    		if (relDir == RELATIVE_BACK) return LEFT;
+    		if (relDir == RELATIVE_FRONT) return RIGHT;
+    	}
+    	return "Wrong inputs!";
     }
     
     // do a breadth first tree search - return the first action to make
