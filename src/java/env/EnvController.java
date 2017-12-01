@@ -122,7 +122,9 @@ public class EnvController extends Environment {
         
     }
     
-    public void initModel() {
+    
+    
+    public void buildModel() {
     	
     }
     

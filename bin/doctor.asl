@@ -53,6 +53,7 @@ objectValue(potentialVictim,32).
 	//test(com);
 	!init(wall);
 	!tell(scout,env);
+	build(mode);
 	.print("I started to work."); 
 	.print("I told scout to start working.");
 	.send(scout,achieve,start).
