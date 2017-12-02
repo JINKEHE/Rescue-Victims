@@ -61,19 +61,7 @@ import jason.environment.grid.GridWorldView;
         	}
         	if (!controller.containsPercept(Playground.DETERMINED_LOC)) drawClones(g);
         }
-        
-        /*
-        public void drawAgent(Graphics g, int x, int y, Color c, int id) {
-        	super.drawAgent(g, x, y, SCOUT_COLOR, -1);
-        	g.setColor(FONT_COLOR);
-        	String directions = "";
-        	if (envModel.getPos().getTerm(2).toString().equals(RIGHT)) directions += "R"; 
-        	if (envModel.getPos().getTerm(2).toString().equals(LEFT)) directions += "L"; 
-        	if (envModel.getPos().getTerm(2).toString().equals(UP)) directions += "U"; 
-        	if (envModel.getPos().getTerm(2).toString().equals(DOWN)) directions += "D"; 
-            super.drawString(g, x, y, defaultFont, directions);
-        }
-*/
+       
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
         	if (envModel.localizationFinished && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
         		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);

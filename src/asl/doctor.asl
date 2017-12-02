@@ -1,6 +1,4 @@
-// Agent doctor in project optmistor
-
-/* START OF initial beliefs for demonstration */
+/* START OF INITIAL BELIEFS FOR DEMO */
 
 // basic info about the arena
 width(7).
@@ -19,9 +17,12 @@ potentialVictim(2,5).
 potentialVictim(5,1).
 potentialVictim(5,6).
 
-/* END OF initial beliefs for demonstration */
+// robot or simulation
+run(simulation).
 
-/* initial beliefs */
+/* END OF INITIAL BELIEFS FOR DEMO */
+
+/* SOME INITIAL BELIEFS */
 
 // counters
 x(0).
@@ -32,14 +33,15 @@ objectValue(wall,128).
 objectValue(obstacle,16).
 objectValue(potentialVictim,32).
 
+// the time of delay
 delay(500).
-
-/* end of initial beliefs */
 
 !start.
 
-+!init(wall): true
-	<- 
+/* PLANS */
+
+/* INITIALIZE THE MODEL AND ENVIRONMENT */
++!init(wall) <- 
 	while(x(X) & width(W) & X<=W-1) {
 		?height(H); 
     	+wall(X,0);
@@ -53,19 +55,6 @@ delay(500).
 		-+y(Y+1);
 	};
 	+addWall(finished).
-
-
-/* Plans */
-
-+!start : true <-
-	!init(wall);
-	!tell(scout,env);
-	?delay(Delay);
-	.wait(Delay);
-	!build(model);
-	.print("I started to work."); 
-	.print("I told scout to start working.");
-	.send(scout,achieve,start).
 
 +!build(model) <-
 	?width(Width);
@@ -96,8 +85,33 @@ delay(500).
 	.send(Who,tell,ListOfObstacle);
 	.send(Who,tell,initEnv(finished)).
 
-+determined(location)[source(scout)] <- !do(plan); .wait(500); !do(mission).				          
+/* GET STARTED */
++!start <-
+	!init(wall);
+	!tell(scout,env);
+	?delay(Delay);
+	.wait(Delay);
+	!build(model);
+	.print("I started to work."); 
+	.print("I told scout to start working.");
+	?run(What);
+	.send(scout,achieve,init(What)).
 
+/* LOCALIZATION PART */	
++!plan(localization) <-
+	get(nextMoveToLocalize);
+	?delay(Delay);
+	.wait(Delay);
+	?nextMoveToLocalize(X);
+	.send(scout,achieve,do(localization,X)).
+	
++determined(location)[source(scout)] <- 
+	!do(plan); 
+	.wait(500); 
+	!do(mission).	
+
+/* MISSION: VISIT AND RESCUE THE VICTIMS */
+				         
 +!do(mission) : pos(X,Y,Z) & potentialVictim(X,Y) <- .send(scout,achieve,analyze(color)).
 +!do(mission) <- !after(analysis).
 +!after(analysis) : not task(finished) <- get(nextMove); .wait(1000); ?bestMove(X); .send(scout,achieve,moveTo(X)).
@@ -118,13 +132,6 @@ delay(500).
 	!remove(restPotentialVictims);
 	+task(finished).
 
-+!remove(restPotentialVictims)<-
-	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List);
-	for(.member(potentialVictim(A,B),List)) {
-		-potentialVictim(A,B);
-		updateModel(white,A,B);
-	}.
-	
 +!check(mission) <- 
 	!do(plan).
 
@@ -132,3 +139,9 @@ delay(500).
 	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List); 
 	plan(List).
 
++!remove(restPotentialVictims)<-
+	.findall(potentialVictim(X,Y),potentialVictim(X,Y),List);
+	for(.member(potentialVictim(A,B),List)) {
+		-potentialVictim(A,B);
+		updateModel(white,A,B);
+	}.

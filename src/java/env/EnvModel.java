@@ -38,27 +38,12 @@ public class EnvModel extends GridWorldModel {
  // constructor with width, height, set of obstacles, set of possible victims, whether there are wall
  	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims) {
  		super(W_GRID, H_GRID, 1);
- 		//addObstacles(setOfObstacles);
- 		//addPossibleVictims(setOfPossibleVictims);
  		victimsToVisit = setOfPossibleVictims;
  		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();
  		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
  		computeCosts();
  		this.setAgPos(SCOUT_ID, 0,0);
  	}
-    
- 	/*
-	// constructor with width, height, set of obstacles, set of possible victims, whether there are wall
-	public EnvModel(int W_GRID, int H_GRID, Set<Location> setOfObstacles, Set<Location> setOfPossibleVictims) {
-		super(W_GRID, H_GRID, 1);
-		//addObstacles(setOfObstacles);
-		addPossibleVictims(setOfPossibleVictims);
-		victimsToVisit = setOfPossibleVictims;
-		costToEachOther = new HashMap<Location, HashMap<Location, Integer>>();
-		pathToEachOther = new HashMap<Location, HashMap<Location, LinkedList<Location>>>();
-		computeCosts();
-		this.setAgPos(SCOUT_ID, 0,0);
-	}*/
 	
 	// this method should only be called when the location is determined
 	public Location getLoc(){
@@ -68,20 +53,6 @@ public class EnvModel extends GridWorldModel {
 	public void setPosition(Position pos) {
 		setAgPos(SCOUT_ID, pos.getLoc());
 	}
-	
-	/*
-	public void addObstacles(Set<Location> setOfObstacles) {
-		for (Location loc : setOfObstacles) {
-			this.add(OBSTACLE, loc);
-		}
-	}
-	*/
-	/*
-	public void addPossibleVictims(Set<Location> setOfPossibleVictims) {
-		for (Location loc : setOfPossibleVictims) {
-			this.add(POTENTIAL_VICTIM, loc);
-		}
-	}*/
 	
 	public void addWalls() {
 		for (int w = 0; w <= width - 1; w++) {

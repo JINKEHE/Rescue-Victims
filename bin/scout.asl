@@ -1,16 +1,19 @@
-// counters
+/* counters */
 x(0).
 y(0).
 
 delay(500).
 
-// the scout does not have any initial beliefs, but the doctor will tell it
+/* the scout does not have any initial beliefs, but the doctor will tell it */
 +task(finished) <- 
 	.print("nice! doctor asked me to stop working."); 
 	?delay(Delay); 
 	.wait(Delay).
 
-// add walls
++!init(robot) <- .print("Run on robot"); start(socket); !start.
++!init(simulation) <- .print("Run in simulation"); start(simulation); !start.
+
+/* add walls */
 +!init(wall) <- 
 	while(x(X) & width(W) & X<=W-1) {
 		?height(H); 
@@ -28,72 +31,30 @@ delay(500).
 	-+y(0);
 	+addWall(finished).
 
-// start the mission
-+!start : true <- 
+/* start the mission */
++!start <- 
 	.print("Doctor told me to get started."); 
 	!init(wall);
-	// add all the posible positions to the belief base
-	add(all);
-	run(simulation);
-	!remove(impossible);
+	add(allPossiblePositions);
 	!scan(around);  
-	.print("Where am I? I started to do localization.");
-	!do(localization).
+	.print("Where am I? I started to do localization.").
 
-/* do localization */
+/* localization */
++!do(localization, Action) <-  
+	moveBefore(Action); 
+	!scan(around).
 
-+!do(localization) : determined(location) 
-	<- .print("Localization finished."); 
-	.send(doctor, tell, determined(location)).	
-
-+!do(localization) : not determined(location) 
-	<- ?bestAction(X); 
-	execute(X); 
-	!scan(around); 
-	!do(localization).
-
-+!addAll(possiblePos) <- 
-	while(x(X) & width(W) & not X=W) {
-		-+y(0);
-		!addY(X);
-		-+x(X+1);
-	};
-	.count(pos(_,_,_),Z);
-	.print(Z).
-
-+!addY(X) <-
-	while(y(Y) & height(H) & not Y=H) {
-		!addPos(X,Y);
-		-+y(Y+1);
-	}.
-
-+!addPos(X,Y) <-
-if (not wall(X,Y) & not obstacle(X,Y)){
-	+pos(X,Y,up);
-	+pos(X,Y,down);
-	+pos(X,Y,left);
-	+pos(X,Y,right);	
-}.
-
-+!scan(around): true
-	<- get(color);
-	get(occupied);
-	!remove(impossible);
++!scan(around) <- 
+	get(color);
+	get(occupiedInfo);
 	remove(impossible);
 	!check(localization).
 
-+!remove(impossible)
-<-
-.findall(pos(X,Y,Heading),pos(X,Y,Heading),ListOfPos);
-//.print(ListOfPos);
-for (.member(pos(X,Y,Heading),ListOfPos)) {
-	
-}.
-+!check(localization): .count(pos(_,_,_),X) & X=1 <- +determined(location).
-//+!check(localization): .count(pos(_,_,_),X) & .print(X) & X=1 <- +determined(location).
-+!check(localization).
-
-
++!check(localization): .count(pos(_,_,_),X) & X=1 <- 
+	.print("Localization finished.");
+	+determined(location); 
+	.send(doctor, tell, determined(location)).
++!check(localization) <- .send(doctor, achieve, plan(localization)).
 
 /* analyze the color of the grid */
 +!analyze(color) <- 
@@ -109,7 +70,7 @@ for (.member(pos(X,Y,Heading),ListOfPos)) {
 	
 /* move to a grid next to the robot according to the relative direction */
 +!moveTo(X) <- 
-	move(X); 
+	moveAfter(X); 
 	?delay(Delay); 
 	.wait(Delay); 
 	.send(doctor,achieve,after(move)).
