@@ -7,38 +7,34 @@ import java.awt.Polygon;
 
 import jason.environment.grid.GridWorldView;
 
-// the view of the environment
-	class EnvView extends GridWorldView {
+/* Class draws the enviroment taking into account our current beliefs */
+class EnvView extends GridWorldView {
 		
-		public static final long serialVersionUID = 1L;
+	public static final long serialVersionUID = 1L;
 
-	    //private static final Color SCOUT_COLOR = Color.GREEN;
-	    private static final Color FONT_COLOR = Color.BLACK;
-	    private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
-	    private static final Color SCOUT_COLOR = Color.BLACK;
-	    private static final Color POSSIBILE_SCOUT_COLOR = Color.YELLOW;
+	private static final Color FONT_COLOR = Color.BLACK;
+	private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
+	private static final Color SCOUT_COLOR = Color.BLACK;
+	private static final Color POSSIBILE_SCOUT_COLOR = Color.YELLOW;
 	    
-	    private static final String UP = "up";
-	    private static final String DOWN = "down";
-	    private static final String LEFT = "left";
-	    private static final String RIGHT = "right";
-	    private Playground controller;
+	private static final String UP = "up";
+	private static final String DOWN = "down";
+	private static final String LEFT = "left";
+	private static final String RIGHT = "right";
+	private Playground controller;
+	private EnvModel envModel;
 	    
-	    //private EnvController controller;
-	    private EnvModel envModel;
-	    
-		public EnvView(EnvModel model, Playground controller) {
-            super(model, "Children's Playground", 600);
-            envModel = model;
-            //this.controller = controller;
-            defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
-            setVisible(true);
-            repaint();
-            this.controller = controller;
-        }
+	public EnvView(EnvModel model, Playground controller) {
+            	super(model, "Children's Playground", 600);
+            	envModel = model;
+            	defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
+            	setVisible(true);
+            	repaint();
+            	this.controller = controller;
+       	}
 		
-        public void draw(Graphics g, int x, int y, int object) {
-        	//Logger.getAnonymousLogger().info("once");
+        /* Draw out our current view of the enviroment */
+	public void draw(Graphics g, int x, int y, int object) {
         	switch (object) {
             	case EnvModel.OBSTACLE: 
             		drawObstacle(g, x, y); 
@@ -62,13 +58,13 @@ import jason.environment.grid.GridWorldView;
         	if (!controller.containsPercept(Playground.DETERMINED_LOC)) drawClones(g);
         }
        
+	/* Draw the agents in the enviroment */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
         	if (envModel.localizationFinished && !envModel.hasObject(EnvModel.RED_VICTIM,x,y) & !envModel.hasObject(EnvModel.BLUE_VICTIM,x,y) & !envModel.hasObject(EnvModel.GREEN_VICTIM,x,y)) {
         		drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
         	} else if (!envModel.localizationFinished){
         		drawClones(g);
         	} else {
-        		// no thing
         		System.out.println("haoba");
         	}
         }
@@ -104,6 +100,7 @@ import jason.environment.grid.GridWorldView;
         	}
         }
         
+	/* Draw a potential victim in the enviroment */ 
         public void drawPotentialVictim(Graphics g, int x, int y) {
     		g.setColor(POTENTIAL_VICTIM_COLOR);
     		g.fillRect(x * cellSizeW+1, y * cellSizeH+1, cellSizeW-1, cellSizeH-1);
@@ -111,6 +108,7 @@ import jason.environment.grid.GridWorldView;
     		super.drawString(g, x, y, new Font("Arial", Font.BOLD, 12), "Potential Victim");
         }
         
+	/* If victim location is correct, draw them and their severity */
         public void drawVictim(Graphics g, int x, int y, String color) {
         	if (color.equals("RED")) g.setColor(Color.RED);
         	if (color.equals("BLUE")) g.setColor(Color.BLUE);
