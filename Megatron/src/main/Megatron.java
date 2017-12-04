@@ -331,15 +331,21 @@ public class Megatron {
 		while(true){
 			try {
 				String command = input.readLine();
+				System.out.println("Command: " + command);
 				if (command.equals("get(color)")) {
-					output.println(this.getColorName());
+					output.println(getColorName());
 				} else if (command.equals("get(occupied)")) {
 					output.println(getOccupiedInfo());
 				} else if (command.startsWith("move")) {
 					String[] parameters = getParameters(command);
-					output.println(this.moveRelatively(parameters[0]));
+					output.println(moveRelatively(parameters[0]));
 					firstStepFinished = true;
-				} 
+				} else if (command.equals("end")) {
+					Sound.beepSequence();
+					Sound.beepSequenceUp();
+					Sound.beep();
+					output.println(DONE);
+				}
 				output.flush();
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -6,19 +6,21 @@ height(8).
 
 // the locations of obstacles
 obstacle(4,1).
-obstacle(2,3).
+obstacle(2,4).
+obstacle(2,6).
+obstacle(4,3).
+obstacle(5,4).
 obstacle(1,2).
-obstacle(3,5).
 
 // the locations of potential victims
-potentialVictim(3,3).
 potentialVictim(4,2).
+potentialVictim(3,3).
 potentialVictim(2,5).
-potentialVictim(5,1).
-potentialVictim(5,6).
+potentialVictim(1,5).
+potentialVictim(1,6).
 
 // robot or simulation
-run(simulation).
+run(robot).
 
 /* END OF INITIAL BELIEFS FOR DEMO */
 

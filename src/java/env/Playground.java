@@ -74,6 +74,7 @@ public class Playground extends Environment {
 	public static final Literal GET_NEXT_MOVE_TO_VISIT = Literal.parseLiteral("get(nextMove)");
 	public static final Literal GET_NEXT_MOVE_TO_LOCALIZE = Literal.parseLiteral("get(nextMoveToLocalize)");
 	public static final Literal GET_OCCUPIED_INFO = Literal.parseLiteral("get(occupiedInfo)");
+	public static final Literal GET_COLOR = Literal.parseLiteral("get(color)");
 	
 	// names of functors
 	private static final String MOVE = "move";
@@ -117,6 +118,7 @@ public class Playground extends Environment {
     }
     
     public boolean executeAction(String agName, Structure action) {
+    	System.out.println("Jason called action: " + action.toString());
     	try {
     		if (action.equals(ADD_ALL)) {
     			addAllPositionsToPool();
@@ -124,13 +126,14 @@ public class Playground extends Environment {
     			removeImpossiblePositions();
     		} else if (action.getFunctor().equals(MOVE_BEFORE)) {
     			moveBeforeLocalization(action.getTerm(0).toString());
-    		} else if (action.equals(Literal.parseLiteral("get(color)"))) {
+    		} else if (action.equals(GET_COLOR)) {
     			if (useSimulation==true) {
     				simulation.getColorFromSimulation();
     			} else {
-    				this.getColorFromRobot();
+    				getColorFromRobot();
     			}
     		} else if (action.equals(STOP)) {
+    			sendCommand("end");
     			stop();
     		} else if (action.getFunctor().equals(MOVE_AFTER)) {
     			moveAfterLocalization(action.getTerm(0).toString());
@@ -183,6 +186,8 @@ public class Playground extends Environment {
     // send a command to the robot and wait for a reply
 	private String sendCommand(String command) {
 		String reply="GG";
+		output.println(command);
+		System.out.println("Sent command: " + command);
 		try {
 			reply = this.input.readLine();
 		} catch (IOException e) {
@@ -602,7 +607,7 @@ public class Playground extends Environment {
     
     // get the color from the robot
     public void getColorFromRobot() {
-    	String color = this.sendCommand("get(color)");
+    	String color = sendCommand("get(color)");
     	logger.info("The color I got is " + color);
     	addPercept(SCOUT,Literal.parseLiteral("color("+color+")"));
     }
