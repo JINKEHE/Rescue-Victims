@@ -1,7 +1,7 @@
 /* counters */
 x(0).
 y(0).
-
+numOfSteps(0).
 delay(500).
 
 /* the scout does not have any initial beliefs, but the doctor will tell it */
@@ -72,7 +72,9 @@ delay(500).
 +!moveTo(X) <- 
 	moveAfter(X); 
 	?delay(Delay); 
-	.wait(Delay); 
+	.wait(Delay);
+	+numOfSteps(numOfSteps + 1);
+	.print("Number of steps taken: ", numOfSteps);
 	.send(doctor,achieve,after(move)).
 
 /* when color papers are found */
@@ -82,7 +84,7 @@ delay(500).
 
 +!found(red,X,Y) <-
 	.send(doctor,tell,red(X,Y)); 
-	.print("Criticial victim found").
+	.print("Critical victim found").
 
 +!found(green,X,Y) <-
 	.send(doctor,tell,green(X,Y)); 
