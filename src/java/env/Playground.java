@@ -63,7 +63,7 @@ public class Playground extends Environment {
 	public static final Literal DETERMINED_LOC = Literal.parseLiteral("determined(location)");
 	public static final Literal ADD_ALL = Literal.parseLiteral("add(allPossiblePositions)");
 	public static final Literal REMOVE_IMPOSSIBLE = Literal.parseLiteral("remove(impossible)");
-    public static final Literal DETECT_ENV = Literal.parseLiteral("detect(env)");
+   	public static final Literal DETECT_ENV = Literal.parseLiteral("detect(env)");
 
 	public static final Literal TASK_FINISHED = Literal.parseLiteral("finished(task)");
 	public static final Literal STOP = Literal.parseLiteral("stop(everything)");
@@ -109,6 +109,9 @@ public class Playground extends Environment {
 
     // the time of delay
     private static final int DELAY = 500;
+    
+    // number of steps taken by the robot
+    private int stepsTaken = 0;
     
     // whether or not use simulation
     private boolean useSimulation = true;
@@ -354,12 +357,14 @@ public class Playground extends Environment {
     
     // move in simulation
     private void moveSimulation(int action) {
-    	simulation.realPos.relativeMove(action); 
+    	simulation.realPos.relativeMove(action);
+	stepsTaken++;
     }
     
     // move when using real robot
     private void moveRobot(int action) {
     	this.sendCommand("move("+action+")");
+	stepsTaken++;
     }
     
     // add all possible positions to the pool and belief base as perceptions
