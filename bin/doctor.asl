@@ -5,19 +5,19 @@ width(7).
 height(8).
 
 // the locations of obstacles
-obstacle(4,1).
-obstacle(2,4).
-obstacle(2,6).
-obstacle(4,3).
-obstacle(5,4).
 obstacle(1,2).
+obstacle(3,2).
+obstacle(4,3).
+obstacle(2,4).
+obstacle(3,5).
+obstacle(2,6).
 
 // the locations of potential victims
 potentialVictim(4,2).
-potentialVictim(3,3).
 potentialVictim(2,5).
-potentialVictim(1,5).
-potentialVictim(1,6).
+potentialVictim(4,6).
+potentialVictim(2,2).
+potentialVictim(3,4).
 
 // robot or simulation
 run(robot).
@@ -121,7 +121,7 @@ delay(500).
 +!after(analysis) : task(finished) <- !after(analysis).
 +!after(move) : task(finished) <- !after(move).	
 
-+task(finished) <- .wait(50000); .print("task finished."); stop(everything).
++task(finished) <- .print("task finished."); stop(everything); .wait(5000);.
 
 /* when color papers are found */
 +red(X,Y) <- -potentialVictim(X,Y); !check(mission).

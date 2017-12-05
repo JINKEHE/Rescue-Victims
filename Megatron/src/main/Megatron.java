@@ -31,10 +31,10 @@ public class Megatron {
 	private float[] colourSample, ultrasonicDistSample;
 	private NXTRegulatedMotor uSensorMotor;
 	// for calibrations
-	private static final double IDEAL_DISTANCE = 15;
+	private static final double IDEAL_DISTANCE = 14;
 	private static final double ADJUST_ANGLE_THRESHOLD = 28;
 	private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
-	private static final double MOVE_DISTANCE = 10;
+	private static final double MOVE_DISTANCE = 15;
 	private boolean firstStepFinished = false;
 	// for pilot setting (optimized through experiments)
 	private MovePilot pilot;
@@ -51,7 +51,7 @@ public class Megatron {
 	private static final int SCAN_DELAY = 40;
 	private static final int REPEAT_SCAN_TIMES = 10;
 	private static final double SCAN_STABLE_THRESHOLD = 0.5;
-	private static final float OCCUPIED_THRESHOLD = 18;
+	private static final float OCCUPIED_THRESHOLD = 30;
 	private static final double RED_THRESHOLD = 0.1;
 	private static final double BLUE_THRESHOLD = 0.1;
 	private static final double GREEN_THRESHOLD = 0.08;
@@ -175,7 +175,6 @@ public class Megatron {
 			}
 			break;
 		}
-		System.out.println(average);
 		return average;
 	}
 
@@ -264,6 +263,7 @@ public class Megatron {
 		pilot.travel(MOVE_DISTANCE);
 		double secondDist = getAccurateDistance();
 		double tantheta = (secondDist-firstDist)/MOVE_DISTANCE;
+		if (Math.abs(secondDist-firstDist)>10) {return;}
 		double theta = Math.atan(tantheta)*180/Math.PI;
 		if (Math.abs(theta)>ADJUST_ANGLE_THRESHOLD ) theta = 0;
 		theta *= reverse ? -1 : 1;
@@ -285,6 +285,7 @@ public class Megatron {
 			pilot.rotate(-theta);
 			pilot.travel(MOVE_DISTANCE);
 		} 
+		adjustAngle(reverse);
 	}
 	
 	// stop the robot 
@@ -348,7 +349,6 @@ public class Megatron {
 				}
 				output.flush();
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}	

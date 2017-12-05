@@ -383,6 +383,7 @@ public class Playground extends Environment {
 				}
 			}
 		}
+    	view.repaint();
 	}
     
     // add all possible positions to the scout' belief base as perceptions

@@ -73,8 +73,9 @@ delay(500).
 	moveAfter(X); 
 	?delay(Delay); 
 	.wait(Delay);
-	+numOfSteps(numOfSteps + 1);
-	.print("Number of steps taken: ", numOfSteps);
+	?numOfSteps(Steps);
+	-+numOfSteps(Steps+1);
+	.print("Number of steps taken: ", (Steps+1));
 	.send(doctor,achieve,after(move)).
 
 /* when color papers are found */

@@ -25,38 +25,38 @@ class EnvView extends GridWorldView {
 	private EnvModel envModel;
 	    
 	public EnvView(EnvModel model, Playground controller) {
-            	super(model, "Children's Playground", 600);
-            	envModel = model;
-            	defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
-            	setVisible(true);
-            	repaint();
-            	this.controller = controller;
-       	}
+		super(model, "Children's Playground", 600);
+        envModel = model;
+        defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
+        setVisible(true);
+        repaint();
+        this.controller = controller;
+	}
 		
-        /* Draw out our current view of the enviroment */
+    /* Draw out our current view of the enviroment */
 	public void draw(Graphics g, int x, int y, int object) {
-        	switch (object) {
-            	case EnvModel.OBSTACLE: 
-            		drawObstacle(g, x, y); 
-            		break;
-            	case EnvModel.WALL:
-            		drawObstacle(g, x, y);
-            		break;
-            	case EnvModel.RED_VICTIM:
-            		drawVictim(g, x, y, "RED");
-            		break;
-            	case EnvModel.BLUE_VICTIM:
-            		drawVictim(g, x, y, "BLUE");
-            		break;
-            	case EnvModel.GREEN_VICTIM:
-            		drawVictim(g, x, y, "GREEN");
-            		break;
-            	case EnvModel.POTENTIAL_VICTIM: 
-            		drawPotentialVictim(g, x, y); 
-            		break;
-        	}
-        	if (!controller.containsPercept(Playground.DETERMINED_LOC)) drawClones(g);
+        switch (object) {
+           	case EnvModel.OBSTACLE: 
+           		drawObstacle(g, x, y); 
+           		break;
+           	case EnvModel.WALL:
+           		drawObstacle(g, x, y);
+           		break;
+           	case EnvModel.RED_VICTIM:
+           		drawVictim(g, x, y, "RED");
+           		break;
+           	case EnvModel.BLUE_VICTIM:
+           		drawVictim(g, x, y, "BLUE");
+           		break;
+           	case EnvModel.GREEN_VICTIM:
+           		drawVictim(g, x, y, "GREEN");
+           		break;
+           	case EnvModel.POTENTIAL_VICTIM: 
+           		drawPotentialVictim(g, x, y); 
+           		break;
         }
+       	drawClones(g);
+    }
        
 	/* Draw the agents in the enviroment */
         public void drawAgent(Graphics g, int x, int y, Color c, int id){
@@ -94,9 +94,9 @@ class EnvView extends GridWorldView {
         public void drawClones(Graphics g) {
         	g.setColor(POSSIBILE_SCOUT_COLOR);
         	if (envModel.possiblePosition.size() > 1) {
-			for (Position pos : envModel.possiblePosition) {
-				drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
-			}
+				for (Position pos : envModel.possiblePosition) {
+					drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
+				}
         	}
         }
         
