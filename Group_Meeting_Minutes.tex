@@ -1,0 +1,133 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{fullpage}
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*}{\section}{}{}
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{pdflscape}
+\usepackage{datetime}
+\usepackage[UKenglish]{babel}
+\let\OLDitemize\itemize
+\renewcommand\itemize{\OLDitemize\addtolength{\itemsep}{-6pt}}
+\title{	
+		\vspace{-1cm}
+		\normalfont \normalsize \textsc{University of Liverpool} \\ [15pt]
+		\horrule{2pt} \\[0.3cm]
+		\large COMP329 Assignment 2 Group 15 \\ 
+		\large Meeting Minutes 
+		\horrule{2pt} \\
+}
+
+\author{
+		\normalfont \normalsize \textbf{Cameron Guest} \\
+		\normalfont \normalsize \textbf{Jiafeng Shou} \\ 
+		\normalfont \normalsize \textbf{Jinke He} \\ [2pt]
+		\normalfont \small \{C.Guest,J.Shou,J.He26\}@student.liverpool.ac.uk \\ [6pt]
+		\normalsize \today \\
+}
+
+\date{\normalfont \normalsize recorded by Cameron Guest} 
+
+\bfseries
+
+
+\begin{document}
+\maketitle
+\noindent\rule{\textwidth}{1pt}
+
+\section*{Meeting 1}
+Date: 24/11/2017 \\
+Time: 17.00 - 18.00 \\
+Location: Lab3 \\
+Present Members: All \\
+
+\subsection*{Status of the project}
+Initialized
+
+\subsection*{Topics}
+\begin{itemize}
+\item Introduction of group members
+\item Discussion on the intended solution to the project
+\item Discussion on the basic structure of the project
+\item Delegation of tasks to each group member
+\end{itemize}
+
+\subsection*{Problems to solve}
+\begin{itemize}
+\item Design a strategy for the agent to choose actions in localization phase
+\item Draw possible possitions of the robot on the map
+\item Design an algorithm for path finding after localization phase
+\end{itemize}
+
+\subsection*{Tasks}
+\begin{itemize}
+\item Do research on how to do localization (Cameron)
+\item Create methods in view class to draw different possible positions of the agent (Jiafeng)
+\item Write the strategy to visit victims based on A* path finding algorithm (Jinke)
+\item Build the environment (All)
+\end{itemize}
+\noindent\rule{\textwidth}{1pt}
+
+\section*{Meeting 2}
+Date: 28/11/2017 \\
+Time: 13.00 - 16.30 \\
+Location: Lab5 \\
+Present Members: All
+
+\subsection*{Status of the project}
+Finished java and jason part and started to do the robot part
+
+\subsection*{Topics}
+\begin{itemize}
+\item Collation of the current parts of the project
+\item Discussion on the remaining functionality which needs to be done
+\item Developed basic functionality for the robot, including the methods to go forward without knowing how far it should move and detect differnet colors
+\end{itemize}
+\subsection*{Problems to solve}
+\begin{itemize}
+\item The robot part
+\item Integrate robot and jason
+\end{itemize}
+\subsection*{Tasks}
+\begin{itemize}
+\item Server and client based on java socket (Cameron)
+\item Robot methods (Jiafeng)
+\item Test java and jason part in simulation (Jinke)
+\item Debug (All)
+\end{itemize}
+
+\noindent\rule{\textwidth}{1pt}
+
+\section*{Meeting 3}
+Date: 01/12/2017 \\
+Time: 14.00 - 16.00 \\
+Location: Lab5 \\
+Present Members: All
+
+\subsection*{Status of the project}
+\textbf{Done.} Started to test in the arena
+
+\subsection*{Topics}
+\begin{itemize}
+\item Set up different scenarios in the real-world environment to test the robot
+\item Cleanup of the code carried out to eliminate unnecessary variables and methods 
+\item Solution is now considered complete
+\end{itemize}
+\subsection*{Problems to solve}
+\begin{itemize}
+\item Clean up the code
+\item Wait for the new map to be constructed and do testing on it
+\end{itemize}
+
+\subsection*{Tasks}
+\begin{itemize}
+\item Finish meeting minutes (All)
+\item Clean up the code (All)
+\item Further testing and debugging (All)
+\end{itemize}
+\noindent\rule{\textwidth}{1pt}
+
+\end{document}
