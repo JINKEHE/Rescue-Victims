@@ -147,7 +147,7 @@ public class Playground extends Environment {
                 makePlan(action.getTerm(0).toString());
             } else if (action.getFunctor().equals(ADD_OBJECT)) {
                 model.set(Integer.valueOf(action.getTerm(0).toString()), Integer.valueOf(action.getTerm(1).toString()),
-                        Integer.valueOf(action.getTerm(2).toString()));
+                Integer.valueOf(action.getTerm(2).toString()));
             } else if (action.equals(GET_NEXT_MOVE_TO_VISIT)) {
                 provideNextMove();
             } else if (action.equals(GET_OCCUPIED_INFO)) {
@@ -314,7 +314,7 @@ public class Playground extends Environment {
         int action = Integer.valueOf(actionStr);
         logger.info("execute" + action);
         if (useSimulation == false) {
-            moveRobot(action);
+            moveRobot(action, "unknown");
         } else {
             moveSimulation(action);
         }
@@ -327,7 +327,7 @@ public class Playground extends Environment {
     private void moveAfterLocalization(String direction) {
         int action = this.absoluteToRelative(direction, model.heading);
         if (useSimulation == false) {
-            moveRobot(action);
+            moveRobot(action, model.heading);
         } else {
             moveSimulation(action);
         }
@@ -368,8 +368,9 @@ public class Playground extends Environment {
     }
 
     // move when using real robot
-    private void moveRobot(int action) {
-        this.sendCommand("move(" + action + ")");
+    private void moveRobot(int action, String heading) {
+        view.repaint();
+        this.sendCommand("move(" + action + "," + heading + ")");
         stepsTaken++;
     }
 

@@ -16,7 +16,7 @@ obstacle(2,6).
 potentialVictim(4,2).
 potentialVictim(2,5).
 potentialVictim(4,6).
-potentialVictim(2,2).
+potentialVictim(2,3).
 potentialVictim(3,4).
 
 // robot or simulation
