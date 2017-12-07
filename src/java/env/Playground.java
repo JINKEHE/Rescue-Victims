@@ -517,7 +517,11 @@ public class Playground extends Environment {
         view.repaint();
     }
 
-    // strategies to choose action to localize
+    /**
+     * strategies to choose action to localize
+     * this method helps agent doctor to compute next position with a maximum probability
+     * no param and return - the result would be added into percept belief
+     */
     private void getNextActionToTakeToLocalize() {
         int bestAction;
         if (model.possiblePosition.size() >= 3) {
@@ -528,8 +532,11 @@ public class Playground extends Environment {
         addPercept(DOCTOR, Literal.parseLiteral("nextMoveToLocalize(" + bestAction + ")"));
     }
 
-    // do a one step search - return the action that can reduce the most number
-    // of possible positions
+    /**
+     * do a one step search - return the action that can reduce the most number
+     * of possible positions
+     * @return best next step action
+     */
     int chooseActionByOneStepSearch() {
         double[] resultsOfActions = new double[4];
         // for invalid actions, the results are -1
@@ -676,9 +683,13 @@ public class Playground extends Environment {
         return str;
     }
 
-    // the double to return is equal to
-    // the number of different scenario after this action/the total number of
-    // scenarios after this action
+    /**
+     * 
+     * @param pool, the possible position pool
+     * @param action, the imaged next step (0F,1B,) 
+     * @return double value, the number of different scenario after this action/the total number of
+     * scenarios after this action
+     */
     private double howThisActionCanDistinguish(HashSet<Position> pool, int action) {
         // if action is not valid, return -1
         ArrayList<String> results = new ArrayList<String>();
