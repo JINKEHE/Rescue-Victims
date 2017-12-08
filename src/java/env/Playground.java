@@ -48,7 +48,7 @@ public class Playground extends Environment {
     private static final String DOCTOR = "doctor";
     private static final int SCOUT_ID = 0;
 
-    private int W_GRID = 5 + 2; // will be overwritten later
+    private int W_GRID = 6 + 2; // will be overwritten later
     private int H_GRID = 6 + 2; // will be overwritten later
 
     // constant literals
@@ -137,7 +137,8 @@ public class Playground extends Environment {
                     getColorFromRobot();
                 }
             } else if (action.equals(STOP)) {
-                sendCommand("end");
+                if (output != null)
+                        sendCommand("end");
                 stop();
             } else if (action.getFunctor().equals(MOVE_AFTER)) {
                 moveAfterLocalization(action.getTerm(0).toString());
@@ -357,7 +358,7 @@ public class Playground extends Environment {
             simulation.realPos = model.getPosition();
         }
         this.clearAllPercepts();
-        view.repaint();
+        view.update();
         this.addPercept(model.getPosition().toLiteral());
     }
 
@@ -369,13 +370,13 @@ public class Playground extends Environment {
 
     // move when using real robot
     private void moveRobot(int action, String heading) {
-        view.repaint();
         this.sendCommand("move(" + action + "," + heading + ")");
         stepsTaken++;
     }
 
     // add all possible positions to the pool and belief base as perceptions
     private void addAllPositionsToPool() {
+        view.setIgnoreRepaint(true);
         for (int x = 0; x < W_GRID; x++) {
             for (int y = 0; y < H_GRID; y++) {
                 if (!isOccupied(x, y)) {
@@ -390,7 +391,8 @@ public class Playground extends Environment {
                 }
             }
         }
-        view.repaint();
+        view.setIgnoreRepaint(false);
+        view.update();
     }
 
     // add all possible positions to the scout' belief base as perceptions
@@ -475,12 +477,12 @@ public class Playground extends Environment {
 
     // remove the impossible positions
     private void removeImpossiblePositions() {
-        view.repaint();
         String color = getColorPercept();
         HashSet<Position> clonePool = (HashSet<Position>) model.possiblePosition.clone();
         for (Position pos : model.possiblePosition) {
             if (containsPercept(SCOUT, OCCUPIED_FRONT) != isRelativeOccupied(pos, RELATIVE_FRONT)) {
                 clonePool.remove(pos);
+                this.removePercept(SCOUT, pos.toLiteral());
                 continue;
             }
             if (containsPercept(SCOUT, OCCUPIED_BACK) != isRelativeOccupied(pos, RELATIVE_BACK)) {
@@ -514,7 +516,7 @@ public class Playground extends Environment {
             removePerceptsByUnif(Literal.parseLiteral("pos(_,_,_)"));
             addPercept(pos.toLiteral());
         }
-        view.repaint();
+        view.update();
     }
 
     // strategies to choose action to localize
@@ -614,7 +616,7 @@ public class Playground extends Environment {
         int y = Integer.valueOf(yInput);
         int object = colorToObject(color);
         model.set(object, x, y);
-        view.repaint();
+        view.update();
     }
 
     private int colorToObject(String color) {
@@ -837,16 +839,26 @@ public class Playground extends Environment {
     class Simulation {
         public Location[] realVictims;
         public Position realPos;
-
+        public long delay = 800;
+        
+        // simulate time delay
+        public void delay() {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                // pass
+            }
+        }
+        
         public Simulation(EnvModel envModel) {
             realVictims = generateRandomLocsOfRealVictims();
             realPos = generateRandomStartingPosition();
+            //realPos = new Position(6,6,"up");
         }
 
         // generate locations of real victims randomly
         public Location[] generateRandomLocsOfRealVictims() {
-            List<Location> list = Arrays
-                    .asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
+            List<Location> list = Arrays.asList(model.victimsToVisit.toArray(new Location[model.victimsToVisit.size()]));
             Collections.shuffle(list);
             logger.info("Red: " + list.get(0).toString());
             logger.info("Blue: " + list.get(0).toString());
@@ -888,6 +900,7 @@ public class Playground extends Environment {
             } else {
                 color = WHITE;
             }
+            delay();
             System.out.println("Simulation: The color is " + color);
             addPercept(SCOUT, Literal.parseLiteral("color(" + color + ")"));
         }
@@ -901,6 +914,7 @@ public class Playground extends Environment {
                 addPercept(SCOUT, OCCUPIED_LEFT);
             if (isRelativeOccupied(simulation.realPos, RELATIVE_RIGHT))
                 addPercept(SCOUT, OCCUPIED_RIGHT);
+            delay();
         }
     }
 

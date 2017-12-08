@@ -50,7 +50,7 @@ delay(500).
 	remove(impossible);
 	!check(localization).
 
-+!check(localization): .count(pos(_,_,_),X) & X=1 <- 
++!check(localization): .count(pos(_,_,_),X) & X==1 <- 
 	.print("Localization finished.");
 	+determined(location); 
 	.send(doctor, tell, determined(location)).

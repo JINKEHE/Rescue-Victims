@@ -15,7 +15,8 @@ class EnvView extends GridWorldView {
     private static final Color FONT_COLOR = Color.BLACK;
     private static final Color POTENTIAL_VICTIM_COLOR = Color.PINK;
     private static final Color SCOUT_COLOR = Color.BLACK;
-    private static final Color POSSIBILE_SCOUT_COLOR = Color.YELLOW;
+    private static final Color POSSIBILE_SCOUT_COLOR = Color.ORANGE;
+    private static final Color BOUND_COLOR = Color.BLACK;
 
     private static final String UP = "up";
     private static final String DOWN = "down";
@@ -60,8 +61,12 @@ class EnvView extends GridWorldView {
 
     /* Draw the agents in the enviroment */
     public void drawAgent(Graphics g, int x, int y, Color c, int id) {
+        /*
         if (envModel.localizationFinished && !envModel.hasObject(EnvModel.RED_VICTIM, x, y)
                 & !envModel.hasObject(EnvModel.BLUE_VICTIM, x, y) & !envModel.hasObject(EnvModel.GREEN_VICTIM, x, y)) {
+            drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
+        } */
+        if (envModel.localizationFinished) {
             drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
         } else if (!envModel.localizationFinished) {
             drawClones(g);
@@ -90,14 +95,20 @@ class EnvView extends GridWorldView {
         }
         g.setColor(color);
         g.fillPolygon(new Polygon(xPoint, yPoint, 3));
+        g.setColor(BOUND_COLOR);
+        g.drawPolygon(new Polygon(xPoint, yPoint, 3));
     }
 
     public void drawClones(Graphics g) {
-        g.setColor(POSSIBILE_SCOUT_COLOR);
-        if (envModel.possiblePosition.size() > 1) {
-            for (Position pos : envModel.possiblePosition) {
-                drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
+        try {
+            g.setColor(POSSIBILE_SCOUT_COLOR);
+            if (envModel.possiblePosition.size() > 1) {
+                for (Position pos : envModel.possiblePosition) {
+                    drawSingleAgent(g, pos, POSSIBILE_SCOUT_COLOR);
+                }
             }
+        } catch (Exception e) {
+            // ignore any exception
         }
     }
 
@@ -105,6 +116,8 @@ class EnvView extends GridWorldView {
     public void drawPotentialVictim(Graphics g, int x, int y) {
         g.setColor(POTENTIAL_VICTIM_COLOR);
         g.fillRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
+        g.setColor(BOUND_COLOR);
+        g.drawRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
         g.setColor(FONT_COLOR);
         super.drawString(g, x, y, new Font("Arial", Font.BOLD, 12), "Potential Victim");
     }
@@ -118,5 +131,7 @@ class EnvView extends GridWorldView {
         if (color.equals("GREEN"))
             g.setColor(Color.GREEN);
         g.fillRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
+        g.setColor(BOUND_COLOR);
+        g.drawRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
     }
 }

@@ -36,7 +36,7 @@ public class Megatron {
     private static final double ADJUST_ANGLE_THRESHOLD = 55;
     private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
     private static final double MOVE_DISTANCE_TO_ADJUST_DISTANCE = 13;
-    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 4;
+    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 6;
     private static final double MOVE_BACK_DISTANCE = 2;
     private boolean firstStepFinished = false;
     // for pilot setting (optimized through experiments)
@@ -55,8 +55,8 @@ public class Megatron {
     // for stopping thread (the thread used to shut down the robot)
     private StoppingThread stoppingThread;
     // for scanning
-    private static final int SCAN_DELAY = 40;
-    private static final int REPEAT_SCAN_TIMES = 10;
+    private static final int SCAN_DELAY = 70;
+    private static final int REPEAT_SCAN_TIMES = 15;
     private static final double SCAN_STABLE_THRESHOLD = 0.5;
     private static final float OCCUPIED_THRESHOLD = 30;
     private static final double RED_THRESHOLD = 0.1;
@@ -190,6 +190,7 @@ public class Megatron {
             }
             break;
         }
+        System.out.println(average);
         return average;
     }
 

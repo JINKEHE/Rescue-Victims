@@ -1,23 +1,44 @@
 /* START OF INITIAL BELIEFS FOR DEMO */
 
+
+
+
+
+// for 6 by 6
 // basic info about the arena
+width(8).
+height(8).
+// the locations of obstacles
+obstacle(3,2).
+obstacle(2,3).
+obstacle(1,6).
+obstacle(5,2).
+obstacle(5,5).
+obstacle(6,5).
+// the locations of potential victims
+potentialVictim(1,1).
+potentialVictim(5,1).
+potentialVictim(3,3).
+potentialVictim(4,4).
+potentialVictim(3,5).
+
+/*
+// for 5 by 6
 width(7).
 height(8).
-
-// the locations of obstacles
-obstacle(1,2).
-obstacle(3,2).
-obstacle(4,3).
-obstacle(2,4).
-obstacle(3,5).
-obstacle(2,6).
-
-// the locations of potential victims
-potentialVictim(4,2).
-potentialVictim(2,5).
-potentialVictim(4,6).
+obstacle(1,3).
+obstacle(2,2).
+obstacle(1,6).
+obstacle(4,2).
+obstacle(4,5).
+obstacle(5,5).
+potentialVictim(1,1).
 potentialVictim(2,3).
+potentialVictim(2,5).
 potentialVictim(3,4).
+potentialVictim(4,1).
+*/
+
 
 // robot or simulation
 run(robot).
