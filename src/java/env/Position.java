@@ -140,7 +140,6 @@ public class Position {
         return "GG";
     }
 
-    // rFront[0], rBack[1], rLeft[2], rRight[3]
     /**
      * Given an absolute heading, aim to convert the absolute position into
      * relative direction .

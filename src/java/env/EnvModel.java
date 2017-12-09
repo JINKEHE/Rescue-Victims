@@ -191,7 +191,14 @@ public class EnvModel extends GridWorldModel {
         System.out.println();
     }
 
-    // Find the order we will visit each victim.
+    /**
+     * Find the order we will visit each victim.
+     * Through brute force to compute every possible permutation
+     * Although we all think the idea is stupid, no one would like to change it.
+     * Anyway it works fast in the small-scale calculation.
+     * @param currentLoc, scout location
+     * @return return the best order
+     */
     public Location[] findOrderOfVictimsToVisit(Location currentLoc) {
         // if there's no unvisited victims, return immediately
         ArrayList<Location[]> permutations = getPermutations(0,
@@ -223,7 +230,12 @@ public class EnvModel extends GridWorldModel {
         return totalCost;
     }
 
-    // a recursive method to get all the permutations of a set of numbers
+    /**
+     * a recursive method to get all the permutations of a set of numbers
+     * @param start, the start point for permutation
+     * @param input, the original input
+     * @return ArrayList, for all possible permutations
+     */
     public static <T> ArrayList<T[]> getPermutations(int start, T[] input) {
         ArrayList<T[]> output = new ArrayList<T[]>();
         if (start == input.length) {
