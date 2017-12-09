@@ -19,7 +19,6 @@ class EnvView extends GridWorldView {
     private static final Color SCOUT_COLOR = Color.BLACK;
     private static final Color POSSIBILE_SCOUT_COLOR = Color.ORANGE;
     private static final Color BOUND_COLOR = Color.BLACK;
-    private static final Color DIRECTION_COLOR = Color.LIGHT_GRAY;
 
     private static final String UP = "up";
     private static final String DOWN = "down";
@@ -144,6 +143,8 @@ class EnvView extends GridWorldView {
         ArrayList<Location> gridsToPass = controller.gridsToPass;
         int x1, x2, y1, y2;
         Location loc1, loc2;
+        // for path to next victim, use dark gray
+        Color theColor = new Color(72, 72, 72);;
         for (int i=0; i<=gridsToPass.size()-2; i++) {
             loc1 = gridsToPass.get(i);
             loc2 = gridsToPass.get(i+1);
@@ -160,9 +161,13 @@ class EnvView extends GridWorldView {
                 xPoints = new int[]{x1-(cellSizeW/weight),x2,x1+(cellSizeW/weight),x2};
                 yPoints = new int[]{y1,y2,y1,(y1+y2)/2};
             }
-            g.setColor(DIRECTION_COLOR);
+            if (loc1.equals(controller.orderToVisitVictims[0])) {
+                // for path to other victims, use light gray
+                theColor = new Color(200, 200, 200);;
+            }
+            g.setColor(theColor);
             g.fillPolygon(xPoints, yPoints, 4);
-            g.setColor(Color.BLACK);
+            g.setColor(BOUND_COLOR);
             g.drawPolygon(xPoints, yPoints, 4);
         }
     }

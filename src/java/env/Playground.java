@@ -108,6 +108,7 @@ public class Playground extends Environment {
     // to move
     private ArrayList<String> thePathToFindVictims;
     public ArrayList<Location> gridsToPass;
+    public Location[] orderToVisitVictims;
     
     // the time of delay
     private static final int DELAY = 500;
@@ -138,10 +139,10 @@ public class Playground extends Environment {
                     getColorFromRobot();
                 }
             } else if (action.equals(STOP)) {
-                if (output != null)
-                    sendCommand("end");
+                if (output != null) sendCommand("end");
                 gridsToPass.clear();
                 view.update();
+                celebrate();
                 stop();
             } else if (action.getFunctor().equals(MOVE_AFTER)) {
                 moveAfterLocalization(action.getTerm(0).toString());
@@ -275,7 +276,8 @@ public class Playground extends Environment {
     // make the plan to visit victims
     private void makePlan(String victimsInString) {
         model.victimsToVisit = stringToLocationSet(victimsInString);
-        thePathToFindVictims = convertLocationsToExecutablePlan(model.findOrderOfVictimsToVisit(model.getLoc()));
+        orderToVisitVictims = model.findOrderOfVictimsToVisit(model.getLoc());
+        thePathToFindVictims = convertLocationsToExecutablePlan(orderToVisitVictims);
     }
 
     // convert a plan consisting of locations the robot need to visit to a plan
@@ -536,7 +538,7 @@ public class Playground extends Environment {
 
     // do a one step search - return the action that can reduce the most number
     // of possible positions
-    int chooseActionByOneStepSearch() {
+    private int chooseActionByOneStepSearch() {
         double[] resultsOfActions = new double[4];
         // for invalid actions, the results are -1
         resultsOfActions[RELATIVE_FRONT] = containsPercept(SCOUT, OCCUPIED_FRONT) ? -1
@@ -565,7 +567,7 @@ public class Playground extends Environment {
     // do a breadth first tree search - return the first action that can lead to
     // a reduction in the number of possible positions
     // require more computational resources
-    public int chooseActionViaTreeSearch(HashSet<Position> thePool) {
+    private int chooseActionViaTreeSearch(HashSet<Position> thePool) {
         HashSet<Position> workingPool = (HashSet<Position>) thePool.clone();
         Node root = new Node(workingPool, -1);
         ArrayList<Node> listOfNodes = new ArrayList<Node>();
@@ -640,14 +642,14 @@ public class Playground extends Environment {
     }
 
     // get the color from the robot
-    public void getColorFromRobot() {
+    private void getColorFromRobot() {
         String color = sendCommand("get(color)");
         logger.info("The color I got is " + color);
         addPercept(SCOUT, Literal.parseLiteral("color(" + color + ")"));
     }
 
     // get color at a location of the map
-    public String getColorAt(Location loc) {
+    private String getColorAt(Location loc) {
         int x = loc.x;
         int y = loc.y;
         if (model.hasObject(EnvModel.RED_VICTIM, x, y)) {
@@ -663,7 +665,7 @@ public class Playground extends Environment {
         }
     }
 
-    public boolean isOccupied(int x, int y) {
+    private boolean isOccupied(int x, int y) {
         return (model.hasObject(EnvModel.WALL, x, y) || model.hasObject(EnvModel.OBSTACLE, x, y));
     }
 
@@ -812,7 +814,7 @@ public class Playground extends Environment {
     }
 
     // move a whole pool of possible positions
-    public HashSet<Position> moveTheWholePool(HashSet<Position> pool, int action) {
+    private HashSet<Position> moveTheWholePool(HashSet<Position> pool, int action) {
         HashSet<Position> resultPool = new HashSet<Position>();
         for (Position pos : pool) {
             Position copy = pos.clone();
@@ -822,7 +824,7 @@ public class Playground extends Environment {
         return resultPool;
     }
 
-    public boolean isRelativeOccupied(Position pos, int rHeading) {
+    private boolean isRelativeOccupied(Position pos, int rHeading) {
         String abs = Position.getAbsoluteHeading(pos.getHeading(), rHeading);
         int x = pos.getX();
         int y = pos.getY();
@@ -837,6 +839,31 @@ public class Playground extends Environment {
         return true;
     }
 
+    private void celebrate() {
+        int i=0, j=0;
+        while (true) {
+            try {
+                int[] values = {EnvModel.BLUE_VICTIM, EnvModel.GREEN_VICTIM, EnvModel.RED_VICTIM, EnvModel.AGENT};
+                int choice = new Random().nextInt(4);
+                model.set(values[choice], i, j);
+                view.update();
+                Thread.sleep(150);
+                model.set(EnvModel.WALL, i, j);
+            } catch (InterruptedException e) {
+            } 
+            if (i == 0 && j > 0) {
+                j--;
+            } else if (j == H_GRID-1) {
+                i--;
+            } else if (i == W_GRID-1) {
+                j++;
+            } else {
+                i++;
+            }
+            if (i == 0 && j == 0) break;
+        }
+    }
+    
     // the simulation class: provide a simulation environment (for testing
     // without robot)
     class Simulation {
