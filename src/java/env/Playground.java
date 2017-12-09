@@ -180,7 +180,11 @@ public class Playground extends Environment {
         return true;
     }
 
-    // build the model with the information from doctor agent
+    /**
+     * build the model with the information from doctor agent
+     * called by jason command buildModel
+     * @param action, jason command
+     */
     private void buildModel(Literal action) {
         W_GRID = Integer.valueOf(action.getTerm(0).toString());
         H_GRID = Integer.valueOf(action.getTerm(1).toString());
@@ -193,7 +197,11 @@ public class Playground extends Environment {
         model.setView(view);
     }
 
-    // send a command to the robot and wait for a reply
+    /**
+     * send a command to the robot and wait for a reply
+     * @param command: get distance, move, get color
+     * @return robot process result
+     */
     private String sendCommand(String command) {
         String reply = "GG";
         output.println(command);
@@ -205,7 +213,9 @@ public class Playground extends Environment {
         return reply;
     }
 
-    // build a socket connection with the robot
+    /**
+     * build a socket connection with the robot
+     */
     private void buildSocket() {
         try {
             // try to connect to the server
@@ -229,7 +239,9 @@ public class Playground extends Environment {
         logger.info("Server ready to send command");
     }
 
-    // close the socket
+    /**
+     * close socket
+     */
     private void closeSocket() {
         try {
             input.close();
@@ -243,8 +255,12 @@ public class Playground extends Environment {
         }
     }
 
-    // convert a Sttring in the foramt of "[A(X1,Y1),B(X2,Y2),C(X3,Y3),...]" to
-    // a Location Set
+    /**
+     * convert a Sttring in the foramt of "[A(X1,Y1),B(X2,Y2),C(X3,Y3),...]" to
+     * a Location Set
+     * @param str, string contains the objects
+     * @return set of parsed result
+     */
     private HashSet<Location> stringToLocationSet(String str) {
         String[] temp = str.split(",");
         HashSet<Location> list = new HashSet<Location>();
@@ -273,15 +289,22 @@ public class Playground extends Environment {
         return list;
     }
 
-    // make the plan to visit victims
+    /**
+     * make the plan to visit victims
+     * @param victimsInString, the victim string created by jason
+     */
     private void makePlan(String victimsInString) {
         model.victimsToVisit = stringToLocationSet(victimsInString);
         orderToVisitVictims = model.findOrderOfVictimsToVisit(model.getLoc());
         thePathToFindVictims = convertLocationsToExecutablePlan(orderToVisitVictims);
     }
 
-    // convert a plan consisting of locations the robot need to visit to a plan
-    // consisting of directions to move
+    /**
+     * convert a plan consisting of locations the robot need to visit to a plan
+     * consisting of directions to move
+     * @param orderToVisit, the victim rescue order
+     * @return a list of movement direction action
+     */
     private ArrayList<String> convertLocationsToExecutablePlan(Location[] orderToVisit) {
         gridsToPass = new ArrayList<Location>();
         ArrayList<String> thePlan = new ArrayList<String>();
@@ -314,7 +337,11 @@ public class Playground extends Environment {
         return thePlan;
     }
 
-    // move before the localization is finished
+    /**
+     * move before the localization is finished
+     * move the robot, move all the possible position.
+     * @param actionStr, the move direction (0F,1B,2L,3R)
+     */
     private void moveBeforeLocalization(String actionStr) {
         int action = Integer.valueOf(actionStr);
         logger.info("execute" + action);
@@ -328,7 +355,11 @@ public class Playground extends Environment {
         this.updatePercepts();
     }
 
-    // move after the localization is finished
+    /**
+     * move after the localization is finished, then update the position
+     * and clear the percept
+     * @param direction, move action (0F,1B,2L,3R)
+     */
     private void moveAfterLocalization(String direction) {
         int action = this.absoluteToRelative(direction, model.heading);
         if (useSimulation == false) {
@@ -437,7 +468,9 @@ public class Playground extends Environment {
         addAllPositionsToScout();
     }
 
-    // add the direction of move to belief base as a perception
+    /**
+     * add the plan of path finding into the percept
+     */
     private void provideNextMove() {
         removePerceptsByUnif(Literal.parseLiteral("bestMove(X,Y)"));
         if (thePathToFindVictims != null && thePathToFindVictims.size() != 0) {
@@ -447,7 +480,10 @@ public class Playground extends Environment {
         }
     }
 
-    // get occupied information from robot
+    /**
+     * get occupied information from robot
+     * then add the percept into jason
+     */
     private void getOccpuiedInfoFromRobot() {
         String binaryResult = this.sendCommand("get(occupied)");
         boolean frontOccupied = binaryResult.charAt(0) == '0' ? false : true;
@@ -525,7 +561,11 @@ public class Playground extends Environment {
         view.update();
     }
 
-    // strategies to choose action to localize
+    /**
+     * strategies to choose action to localize
+     * this method helps agent doctor to compute next position with a maximum probability
+     * no param and return - the result would be added into percept belief
+     */
     private void getNextActionToTakeToLocalize() {
         int bestAction;
         if (model.possiblePosition.size() >= 3) {
@@ -536,8 +576,12 @@ public class Playground extends Environment {
         addPercept(DOCTOR, Literal.parseLiteral("nextMoveToLocalize(" + bestAction + ")"));
     }
 
-    // do a one step search - return the action that can reduce the most number
-    // of possible positions
+    /**
+     * do a one step search - return the action that can reduce the most number
+     * of possible positions, but only choose the local min value
+     * while equal situation, then use the random to choose.
+     * @return best next step action
+     */
     private int chooseActionByOneStepSearch() {
         double[] resultsOfActions = new double[4];
         // for invalid actions, the results are -1
@@ -564,24 +608,29 @@ public class Playground extends Environment {
         return action;
     }
 
-    // do a breadth first tree search - return the first action that can lead to
-    // a reduction in the number of possible positions
-    // require more computational resources
+    /**
+     * do a breadth first tree search - return the first action that can lead to
+     * a reduction in the number of possible positions
+     * require more computational resources
+     * @param thePool, the possible position
+     * @return action, the best response.
+     */
     private int chooseActionViaTreeSearch(HashSet<Position> thePool) {
         HashSet<Position> workingPool = (HashSet<Position>) thePool.clone();
         Node root = new Node(workingPool, -1);
         ArrayList<Node> listOfNodes = new ArrayList<Node>();
-        listOfNodes.add(root);
-        while (true) {
-            ArrayList<Node> newList = new ArrayList<Node>();
-            for (Node node : listOfNodes) {
-                if (!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_FRONT)) {
+        listOfNodes.add(root);								//the initial queue for nodes
+        while (true) {										//while true until find the node which could distinguish the position
+            ArrayList<Node> newList = new ArrayList<Node>();	//the queue for putting the bfs node
+            for (Node node : listOfNodes) {					//iterate the node
+            		//since each possible position has the same surrounding, regard iterator().next() as a random pick
+                if (!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_FRONT)) {	//for every possible position do, front action
                     Node newNode = node.getNewNode(RELATIVE_FRONT);
-                    if (canThisActionDistinguish(node.positionPool, RELATIVE_FRONT)) {
-                        logger.info("action chosen" + RELATIVE_FRONT);
-                        return newNode.getActionTakenInRootNode();
+                    if (canThisActionDistinguish(node.positionPool, RELATIVE_FRONT)) {			//if this action could distinguish the position
+                        logger.info("action chosen" + RELATIVE_FRONT);							//then we find the shortest available path
+                        return newNode.getActionTakenInRootNode();								//end the loop, and return the next action
                     }
-                    newList.add(newNode);
+                    newList.add(newNode);														//else, continue to bfs
                 }
                 if (!isRelativeOccupied(node.positionPool.iterator().next(), RELATIVE_BACK)) {
                     Node newNode = node.getNewNode(RELATIVE_BACK);
@@ -608,9 +657,9 @@ public class Playground extends Environment {
                     newList.add(newNode);
                 }
             }
-            listOfNodes = newList;
-            if (newList.size() >= 10000) {
-                logger.info("Mirror detected.");
+            listOfNodes = newList;															//continue to search the next round node
+            if (newList.size() >= 10000) {													//if meet the symmetric map
+                logger.info("Mirror detected.");												//then dead
                 return 0;
             }
         }
@@ -641,7 +690,10 @@ public class Playground extends Environment {
         }
     }
 
-    // get the color from the robot
+    /**
+     * get the color from the robot
+     * then add the color to the percept
+     */
     private void getColorFromRobot() {
         String color = sendCommand("get(color)");
         logger.info("The color I got is " + color);
@@ -669,8 +721,12 @@ public class Playground extends Environment {
         return (model.hasObject(EnvModel.WALL, x, y) || model.hasObject(EnvModel.OBSTACLE, x, y));
     }
 
-    // for a position, there are 2^4=16 possibilities of occupancy around it.
-    // notice that in robot side, a binary number is used to represent this
+    /**
+     * for a position, there are 2^4=16 possibilities of occupancy around it.
+     * notice that in robot side, a binary number is used to represent this
+     * @param pos
+     * @return string, such as, "1101" represents front, back, right are occupied.
+     */
     String getRelativeOccupiedInfo(Position pos) {
         String str = "";
         if (isRelativeOccupied(pos, RELATIVE_FRONT))
@@ -684,9 +740,13 @@ public class Playground extends Environment {
         return str;
     }
 
-    // the double to return is equal to
-    // the number of different scenario after this action/the total number of
-    // scenarios after this action
+    /**
+     * simulate the imaged action, then find out #different result
+     * @param pool, the possible position pool
+     * @param action, the imaged next step (0F,1B,2L,3R) 
+     * @return double value, the number of different scenario after this action/the total number of
+     * scenarios after this action
+     */
     private double howThisActionCanDistinguish(HashSet<Position> pool, int action) {
         // if action is not valid, return -1
         ArrayList<String> results = new ArrayList<String>();
@@ -704,7 +764,14 @@ public class Playground extends Environment {
         return diffNum / totalNum;
     }
 
-    // whether this action can remove at least one possible position
+    /**
+     * whether this action can remove at least one possible position
+     * the basic idea is the same as the howThisActionCanDistinguish method
+     * @param thePool, the possible position pool
+     * @param action, the imaged next step (0F,1B,2L,3R)
+     * @return double value, the number of different scenario after this action/the total number of
+     * scenarios after this action
+     */
     private boolean canThisActionDistinguish(HashSet<Position> thePool, int action) {
         HashSet<Position> pool = (HashSet<Position>) thePool.clone();
         // if action is not valid, return -1
@@ -813,7 +880,12 @@ public class Playground extends Environment {
         return "Wrong inputs!";
     }
 
-    // move a whole pool of possible positions
+    /**
+     * move a whole pool of possible positions
+     * @param pool, the all possible position pool
+     * @param action, the move direction action
+     * @return pool, moved pool
+     */
     private HashSet<Position> moveTheWholePool(HashSet<Position> pool, int action) {
         HashSet<Position> resultPool = new HashSet<Position>();
         for (Position pos : pool) {
@@ -823,7 +895,12 @@ public class Playground extends Environment {
         }
         return resultPool;
     }
-
+    /**
+     * Give the occupied info about the relative direction
+     * @param pos, current position
+     * @param rHeading, the relative direction
+     * @return boolean, 1 stands for occupied, 0 stands for not
+     */
     private boolean isRelativeOccupied(Position pos, int rHeading) {
         String abs = Position.getAbsoluteHeading(pos.getHeading(), rHeading);
         int x = pos.getX();
@@ -864,8 +941,12 @@ public class Playground extends Environment {
         }
     }
     
-    // the simulation class: provide a simulation environment (for testing
-    // without robot)
+    /**
+     * the simulation class: provide a simulation environment (for testing
+     * without robot)
+     * @author Jinke He
+     *
+     */
     class Simulation {
         public Location[] realVictims;
         public Position realPos;
@@ -948,7 +1029,11 @@ public class Playground extends Environment {
         }
     }
 
-    // Node class: for breadth first search
+    /**
+     * Node class: for breadth first search
+     * @author Jinke He
+     *
+     */
     class Node {
 
         public HashSet<Position> positionPool;
@@ -976,7 +1061,11 @@ public class Playground extends Environment {
             return action;
         }
 
-        // via this tree search, we only want to know one step to move
+        /**
+         * classic tree node search
+         * via this tree search, we only want to know next one step to move
+         * @return the next step action (0F,1B,2L,3R) 
+         */
         int getActionTakenInRootNode() {
             int action = getActionTakenInFatherNode();
             Node father = getFatherNode();
@@ -987,7 +1076,11 @@ public class Playground extends Environment {
             return action;
         }
 
-        // get a new node by taking an action in the current node
+        /**
+         * get a new node by taking an action in the current node
+         * @param action, next action (0F,1B,2L,3R)
+         * @return node with all moved possible position pool
+         */
         public Node getNewNode(int action) {
             HashSet<Position> newPool = moveTheWholePool((HashSet<Position>) this.positionPool.clone(), action);
             Node newNode = new Node(newPool, action);

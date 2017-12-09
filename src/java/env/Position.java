@@ -63,7 +63,10 @@ public class Position {
         return Literal.parseLiteral("pos(" + x + "," + y + "," + heading + ")");
     }
 
-    // rFront[0], rBack[1], rLeft[2], rRight[3]
+    /**
+     * give a relative action, then calculate the absolute the position
+     * @param rDirection, next step direction (0F,1B,2L,3R)
+     */
     public void relativeMove(int rDirection) {
         String absHeading = Position.getAbsoluteHeading(heading, rDirection);
         switch (absHeading) {
@@ -83,7 +86,14 @@ public class Position {
         heading = absHeading;
     }
 
-    // rFront[0], rBack[1], rLeft[2], rRight[3]
+    /**
+     * Given an absolute heading, aim to convert the relative direction into
+     * absolute position.
+     * This method written by Jinke is not elegant, I do not like to explain.
+     * @param heading, absolute heading
+     * @param rHeading, relative redirection (0F,1B,2L,3R)
+     * @return absolute heading, and "GG" as exception
+     */
     public static String getAbsoluteHeading(String heading, int rHeading) {
         switch (heading) {
         case UP:
@@ -131,6 +141,14 @@ public class Position {
     }
 
     // rFront[0], rBack[1], rLeft[2], rRight[3]
+    /**
+     * Given an absolute heading, aim to convert the absolute position into
+     * relative direction .
+     * This method written by Jinke is not elegant again, I do not like to explain again.
+     * @param heading, absolute heading
+     * @param rHeading, relative redirection (0F,1B,2L,3R)
+     * @return absolute heading, and "GG" as exception
+     */
     public static int getRelativeHeading(String heading, String targetHeading) {
         switch (heading) {
         case UP:
