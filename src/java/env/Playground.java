@@ -54,7 +54,7 @@ public class Playground extends Environment {
     // constant literals
     public static final Literal COLOR_POSSIBLE = Literal.parseLiteral("color(possible)");
     public static final Literal COLOR_WHITE = Literal.parseLiteral("color(white)");
-    public static final Literal COLOR_BLUE = Literal.parseLiteral("colo(blue)");
+    public static final Literal COLOR_BLUE = Literal.parseLiteral("color(blue)");
     public static final Literal COLOR_GREEN = Literal.parseLiteral("color(green)");
     public static final Literal COLOR_RED = Literal.parseLiteral("color(red)");
     public static final Literal OCCUPIED_BACK = Literal.parseLiteral("occupied(back)");
@@ -107,7 +107,8 @@ public class Playground extends Environment {
     // the path to find possible victims, which consists of relative directions
     // to move
     private ArrayList<String> thePathToFindVictims;
-
+    public ArrayList<Location> gridsToPass;
+    
     // the time of delay
     private static final int DELAY = 500;
 
@@ -138,7 +139,9 @@ public class Playground extends Environment {
                 }
             } else if (action.equals(STOP)) {
                 if (output != null)
-                        sendCommand("end");
+                    sendCommand("end");
+                gridsToPass.clear();
+                view.update();
                 stop();
             } else if (action.getFunctor().equals(MOVE_AFTER)) {
                 moveAfterLocalization(action.getTerm(0).toString());
@@ -197,7 +200,6 @@ public class Playground extends Environment {
         try {
             reply = this.input.readLine();
         } catch (IOException e) {
-            e.printStackTrace();
         }
         return reply;
     }
@@ -279,8 +281,8 @@ public class Playground extends Environment {
     // convert a plan consisting of locations the robot need to visit to a plan
     // consisting of directions to move
     private ArrayList<String> convertLocationsToExecutablePlan(Location[] orderToVisit) {
+        gridsToPass = new ArrayList<Location>();
         ArrayList<String> thePlan = new ArrayList<String>();
-        ArrayList<Location> gridsToPass = new ArrayList<Location>();
         Location loc = model.getLoc();
         gridsToPass.add(loc);
         for (int i = 0; i <= orderToVisit.length - 1; i++) {
@@ -332,7 +334,6 @@ public class Playground extends Environment {
         } else {
             moveSimulation(action);
         }
-        System.out.println("want to move" + direction);
         Location scoutLoc = model.getAgPos(SCOUT_ID);
         switch (direction) {
         case DOWN:
@@ -440,6 +441,7 @@ public class Playground extends Environment {
         if (thePathToFindVictims != null && thePathToFindVictims.size() != 0) {
             addPercept(DOCTOR, Literal.parseLiteral("bestMove(" + thePathToFindVictims.get(0) + ")"));
             thePathToFindVictims.remove(0);
+            gridsToPass.remove(0);
         }
     }
 
@@ -462,16 +464,17 @@ public class Playground extends Environment {
 
     // get color percept
     private String getColorPercept() {
-        if (containsPercept(COLOR_WHITE))
+        if (containsPercept(SCOUT, COLOR_WHITE)) {
             return WHITE;
-        if (containsPercept(COLOR_BLUE))
+        } else if (containsPercept(SCOUT, COLOR_BLUE)) {
             return BLUE;
-        if (containsPercept(COLOR_GREEN))
+        } else if (containsPercept(SCOUT, COLOR_GREEN)) {
             return GREEN;
-        if (containsPercept(COLOR_RED))
+        } else if (containsPercept(SCOUT, COLOR_RED)) {
             return RED;
-        if (containsPercept(COLOR_POSSIBLE))
+        } else if (containsPercept(SCOUT, COLOR_POSSIBLE)) {
             return POSSIBLE;
+        }
         return WHITE;
     }
 
@@ -500,7 +503,8 @@ public class Playground extends Environment {
                 this.removePercept(SCOUT, pos.toLiteral());
                 continue;
             }
-            if (!getColorAt(pos.getLoc()).equals(POSSIBLE) && !getColorAt(pos.getLoc()).equals(color)) {
+            // the real color got is not white but this position has no possible victim
+            if (!color.equals(WHITE) && getColorAt(pos.getLoc()).equals(WHITE)) {
                 clonePool.remove(pos);
                 this.removePercept(SCOUT, pos.toLiteral());
                 continue;
@@ -604,7 +608,7 @@ public class Playground extends Environment {
             }
             listOfNodes = newList;
             if (newList.size() >= 10000) {
-                logger.info("size" + newList.size());
+                logger.info("Mirror detected.");
                 return 0;
             }
         }
@@ -701,7 +705,6 @@ public class Playground extends Environment {
     // whether this action can remove at least one possible position
     private boolean canThisActionDistinguish(HashSet<Position> thePool, int action) {
         HashSet<Position> pool = (HashSet<Position>) thePool.clone();
-        ;
         // if action is not valid, return -1
         ArrayList<String> results = new ArrayList<String>();
         for (Position pos : pool) {

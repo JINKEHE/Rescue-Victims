@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Polygon;
+import java.util.ArrayList;
 
 import jason.environment.grid.GridWorldView;
+import jason.environment.grid.Location;
 
 /* Class draws the enviroment taking into account our current beliefs */
 class EnvView extends GridWorldView {
@@ -17,6 +19,7 @@ class EnvView extends GridWorldView {
     private static final Color SCOUT_COLOR = Color.BLACK;
     private static final Color POSSIBILE_SCOUT_COLOR = Color.ORANGE;
     private static final Color BOUND_COLOR = Color.BLACK;
+    private static final Color DIRECTION_COLOR = Color.LIGHT_GRAY;
 
     private static final String UP = "up";
     private static final String DOWN = "down";
@@ -56,6 +59,9 @@ class EnvView extends GridWorldView {
             drawPotentialVictim(g, x, y);
             break;
         }
+        if (controller.gridsToPass != null) {
+            drawPlans(g);
+        }
         drawClones(g);
     }
 
@@ -70,8 +76,6 @@ class EnvView extends GridWorldView {
             drawSingleAgent(g, envModel.getPosition(), SCOUT_COLOR);
         } else if (!envModel.localizationFinished) {
             drawClones(g);
-        } else {
-            System.out.println("haoba");
         }
     }
 
@@ -133,5 +137,33 @@ class EnvView extends GridWorldView {
         g.fillRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
         g.setColor(BOUND_COLOR);
         g.drawRect(x * cellSizeW + 1, y * cellSizeH + 1, cellSizeW - 1, cellSizeH - 1);
+    }
+    
+    // draw the plan to visit victims
+    public void drawPlans(Graphics g) {
+        ArrayList<Location> gridsToPass = controller.gridsToPass;
+        int x1, x2, y1, y2;
+        Location loc1, loc2;
+        for (int i=0; i<=gridsToPass.size()-2; i++) {
+            loc1 = gridsToPass.get(i);
+            loc2 = gridsToPass.get(i+1);
+            x1 = loc1.x * cellSizeW + cellSizeW / 2;
+            x2 = loc2.x * cellSizeW + cellSizeW / 2;
+            y1 = loc1.y * cellSizeH + cellSizeH / 2;
+            y2 = loc2.y * cellSizeH + cellSizeH / 2;
+            int[] xPoints, yPoints;
+            int weight = 6;
+            if (loc2.y == loc1.y) {
+                xPoints = new int[]{x1,x2,x1,(x1+x2)/2};
+                yPoints = new int[]{y1+(cellSizeH/weight),y2,y1-(cellSizeH/weight),y2};
+            } else {
+                xPoints = new int[]{x1-(cellSizeW/weight),x2,x1+(cellSizeW/weight),x2};
+                yPoints = new int[]{y1,y2,y1,(y1+y2)/2};
+            }
+            g.setColor(DIRECTION_COLOR);
+            g.fillPolygon(xPoints, yPoints, 4);
+            g.setColor(Color.BLACK);
+            g.drawPolygon(xPoints, yPoints, 4);
+        }
     }
 }

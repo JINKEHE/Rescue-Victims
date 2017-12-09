@@ -32,7 +32,7 @@ public class Megatron {
     private float[] colourSample, ultrasonicDistSample;
     private NXTRegulatedMotor uSensorMotor;
     // for calibrations
-    private static final double IDEAL_DISTANCE = 14;
+    private static final double IDEAL_DISTANCE = 10;
     private static final double ADJUST_ANGLE_THRESHOLD = 55;
     private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
     private static final double MOVE_DISTANCE_TO_ADJUST_DISTANCE = 13;
@@ -48,7 +48,7 @@ public class Megatron {
     private static final double DIAMETER = 4.4;
     private static final double OFFSET = 5.5;
     // shorter one in this assignment
-    private static final double LEFT_RIGHT_DISTANCE = 9;
+    private static final double LEFT_RIGHT_DISTANCE =11;
     // longer one in this assignment
     private static final double UP_DOWN_DISTANCE = 12;
     private static final double FIXED_LENGTH_DISTANCE = 12;
@@ -368,6 +368,7 @@ public class Megatron {
         ev3 = BrickFinder.getDefault();
         setupPilot();
         setupColorSensor();
+        getColorName();
         setupUltrasonicSensor();
         setupServer();
         stoppingThread = new StoppingThread(this);
