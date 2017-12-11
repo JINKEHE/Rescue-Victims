@@ -101,7 +101,7 @@ public class Playground extends Environment {
     private PrintWriter output;
     private InputStream iStream;
     private BufferedReader input;
-    private static final String ROBOT_IP = "10.0.1.1";
+    private static final String ROBOT_IP = "10.0.1.2";
     private static final int ROBOT_PORT = 18888;
 
     // the path to find possible victims, which consists of relative directions

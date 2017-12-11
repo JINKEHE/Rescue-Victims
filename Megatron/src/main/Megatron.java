@@ -32,11 +32,11 @@ public class Megatron {
     private float[] colourSample, ultrasonicDistSample;
     private NXTRegulatedMotor uSensorMotor;
     // for calibrations
-    private static final double IDEAL_DISTANCE = 10;
+    private static final double IDEAL_DISTANCE = 11;
     private static final double ADJUST_ANGLE_THRESHOLD = 55;
     private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
     private static final double MOVE_DISTANCE_TO_ADJUST_DISTANCE = 13;
-    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 6;
+    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 7;
     private static final double MOVE_BACK_DISTANCE = 2;
     private boolean firstStepFinished = false;
     // for pilot setting (optimized through experiments)
@@ -46,7 +46,8 @@ public class Megatron {
     private static final double LINEAR_SPEED = 10;
     private static final double LINEAR_ACCELERATION = 60;
     private static final double DIAMETER = 4.4;
-    private static final double OFFSET = 5.5;
+    private static final double OFFSET = 5.55;
+    private static final int SENSOR_MOTOR_ROTATE_ANGLE = 95;
     // shorter one in this assignment
     private static final double LEFT_RIGHT_DISTANCE =11;
     // longer one in this assignment
@@ -86,7 +87,7 @@ public class Megatron {
     // headings
     private static final String UNKNOWN = "unknown";
     private static final String LEFT = "left";
-    private static final String RIGHT = "right";
+    private static final String RIGHT = "right"; 
     
     /* set up sensors */
 
@@ -96,6 +97,8 @@ public class Megatron {
         uSensor = new EV3UltrasonicSensor(ev3.getPort("S3"));
         ultrasonicDistSP = uSensor.getDistanceMode();
         ultrasonicDistSample = new float[ultrasonicDistSP.sampleSize()];
+        //uSensorMotor.setAcceleration(200);
+        //uSensorMotor.setAcceleration(10);;
     }
 
     // set up the color sensor -> using RGB mode
@@ -124,10 +127,13 @@ public class Megatron {
         } else if (r > RED_THRESHOLD && g > BLUE_THRESHOLD && b > BLUE_THRESHOLD) {
             return WHITE;
         } else if (r > RED_THRESHOLD) {
+            Sound.beep();
             return RED;
         } else if (b > BLUE_THRESHOLD) {
+            Sound.beep();
             return BLUE;
         } else if (g > GREEN_THRESHOLD) {
+            Sound.beep();
             return GREEN;
         }
         return WRONG;
@@ -226,18 +232,35 @@ public class Megatron {
     private String moveRelatively(String relativeDirection, String heading) {
         System.out.println("move: " + relativeDirection);
         doCalibration(relativeDirection);
+        boolean canFixRotationError = false;
         switch (relativeDirection) {
         case RELATIVE_FRONT:
             break;
         case RELATIVE_BACK:
+            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
+                canFixRotationError = true;
+            }
             pilot.rotate(180);
             break;
         case RELATIVE_LEFT:
+            uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
+            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
+                canFixRotationError = true;
+            }
+            uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
             pilot.rotate(-90);
             break;
         case RELATIVE_RIGHT:
+            uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
+            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
+                canFixRotationError = true;
+            }
+            uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
             pilot.rotate(90);
             break;
+        }
+        if (canFixRotationError == true) {
+            fixRotationError();
         }
         // if after rotation, heading is up or down -> then move the longer distance
         // if after rotation, heading is left or right -> then move the short distance
@@ -264,6 +287,29 @@ public class Megatron {
         return DONE;
     }    
     
+    private void fixRotationError() {
+        double distance;
+        uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
+        distance = getAccurateDistance();
+        if (distance < OCCUPIED_THRESHOLD) {
+            adjustAngle(true);
+            if (distance < IDEAL_DISTANCE) {
+                adjustDistance(true);
+            }
+            uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
+        } else {
+            uSensorMotor.rotate(-2*SENSOR_MOTOR_ROTATE_ANGLE);
+            distance = getAccurateDistance();
+            if (distance < OCCUPIED_THRESHOLD){
+                adjustAngle(false);
+                if (distance < IDEAL_DISTANCE) {
+                    adjustDistance(true);
+                }
+            }
+            uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
+        }
+    }
+    
     /* calibration related methods */
 
     // do calibration
@@ -274,11 +320,11 @@ public class Megatron {
             return;
         } else if (direction.equals(RELATIVE_BACK) || direction.equals(RELATIVE_RIGHT)) {
             // according to the left obstacle
-            sensorToRotate = 90;
+            sensorToRotate = SENSOR_MOTOR_ROTATE_ANGLE;
             reverse = true;
         } else if (direction.equals(RELATIVE_LEFT)) {
             // according to the right obstacle
-            sensorToRotate = -90;
+            sensorToRotate = -SENSOR_MOTOR_ROTATE_ANGLE;
             reverse = false;
         }
         pilot.travel(-MOVE_BACK_DISTANCE);
@@ -296,6 +342,7 @@ public class Megatron {
 
     // adjust the angle between the wall
     private void adjustAngle(boolean reverse) {
+        System.out.println("Ad angle");
         pilot.travel(-MOVE_DISTANCE_TO_ADJUST_ANGLE);
         double firstDist = getAccurateDistance();
         pilot.travel(MOVE_DISTANCE_TO_ADJUST_ANGLE);
@@ -305,8 +352,10 @@ public class Megatron {
             return;
         }
         double theta = Math.atan(tantheta) * 180 / Math.PI;
-        if (Math.abs(theta) > ADJUST_ANGLE_THRESHOLD)
+        System.out.println("theta: " + theta);
+        if (Math.abs(theta) > ADJUST_ANGLE_THRESHOLD) {
             theta = 0;
+        }
         theta *= reverse ? -1 : 1;
         pilot.rotate(theta);
     }
@@ -327,8 +376,8 @@ public class Megatron {
             pilot.travel(-MOVE_DISTANCE_TO_ADJUST_DISTANCE);
             pilot.rotate(-theta);
             pilot.travel(MOVE_DISTANCE_TO_ADJUST_DISTANCE);
+            adjustAngle(reverse);
         }
-        adjustAngle(reverse);
     }
 
     // stop the robot
@@ -424,11 +473,11 @@ public class Megatron {
         boolean front = getAccurateDistance() < OCCUPIED_THRESHOLD;
         results[0] = front ? '1' : '0';
         // sensor rotate right 90 get right
-        uSensorMotor.rotate(-90);
+        uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
         boolean right = getAccurateDistance() < OCCUPIED_THRESHOLD;
         results[3] = right ? '1' : '0';
         // sensor rotate left 180
-        uSensorMotor.rotate(180);
+        uSensorMotor.rotate(2*SENSOR_MOTOR_ROTATE_ANGLE);
         boolean left = getAccurateDistance() < OCCUPIED_THRESHOLD;
         results[2] = left ? '1' : '0';
         if (firstStepFinished == true) {
@@ -438,7 +487,7 @@ public class Megatron {
             results[1] = getAccurateDistance() < OCCUPIED_THRESHOLD ? '1' : '0';
             pilot.rotate(90);
         }
-        uSensorMotor.rotate(-90);
+        uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
         str = new String(results);
         System.out.println(str);
         pilot.travel(MOVE_BACK_DISTANCE);

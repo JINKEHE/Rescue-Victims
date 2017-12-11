@@ -1,7 +1,7 @@
 /* START OF INITIAL BELIEFS FOR DEMO */
 
 // basic info about the arena
-width(7).
+width(8).
 height(8).
 // the locations of obstacles
 obstacle(3,2).
@@ -9,7 +9,7 @@ obstacle(2,3).
 obstacle(1,6).
 obstacle(5,2).
 obstacle(5,5).
-//obstacle(6,5).
+obstacle(6,5).
 // the locations of potential victims
 potentialVictim(1,1).
 potentialVictim(5,1).
@@ -18,7 +18,7 @@ potentialVictim(4,4).
 potentialVictim(3,5).
 
 // robot or simulation
-run(simulation).
+run(robot).
 
 /* END OF INITIAL BELIEFS FOR DEMO */
 
