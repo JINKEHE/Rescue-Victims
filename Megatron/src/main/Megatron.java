@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import lejos.hardware.Brick;
 import lejos.hardware.BrickFinder;
+import lejos.hardware.Button;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.SampleProvider;
@@ -36,7 +37,7 @@ public class Megatron {
     private static final double ADJUST_ANGLE_THRESHOLD = 55;
     private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
     private static final double MOVE_DISTANCE_TO_ADJUST_DISTANCE = 13;
-    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 7;
+    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 5;
     private static final double MOVE_BACK_DISTANCE = 2;
     private boolean firstStepFinished = false;
     // for pilot setting (optimized through experiments)
@@ -47,7 +48,7 @@ public class Megatron {
     private static final double LINEAR_ACCELERATION = 80;
     private static final double DIAMETER = 4.4;
     private static final double OFFSET = 5.55;
-    private static final int SENSOR_MOTOR_ROTATE_ANGLE = 91;
+    private static final int SENSOR_MOTOR_ROTATE_ANGLE = 95;                                                                             ;
     // shorter one in this assignment
     private static final double LEFT_RIGHT_DISTANCE = 11;
     // longer one in this assignment
@@ -57,7 +58,7 @@ public class Megatron {
     private StoppingThread stoppingThread;
     // for scanning
     private static final int SCAN_DELAY = 70;
-    private static final int REPEAT_SCAN_TIMES = 15;
+    private static final int REPEAT_SCAN_TIMES = 20;
     private static final double SCAN_STABLE_THRESHOLD = 0.5;
     private static final float OCCUPIED_THRESHOLD = 30;
     private static final double RED_THRESHOLD = 0.1;
@@ -237,7 +238,7 @@ public class Megatron {
         case RELATIVE_FRONT:
             break;
         case RELATIVE_BACK:
-            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
+            if (!isTheGridOccupied()) {
                 canFixRotationError = true;
             }
             pilot.rotate(180);
@@ -282,6 +283,7 @@ public class Megatron {
     }    
     
     private void fixRotationError() {
+        if (firstStepFinished == false) return;
         double distance;
         uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
         distance = getAccurateDistance();
@@ -323,24 +325,21 @@ public class Megatron {
         }
         pilot.travel(-MOVE_BACK_DISTANCE);
         uSensorMotor.rotate(sensorToRotate);
-        double distance = getAccurateDistance();
-        if (distance < OCCUPIED_THRESHOLD) {
+        double distance = getAccurateDistance(); // 127
+        if (distance < OCCUPIED_THRESHOLD) { // 130
             adjustAngle(reverse);
-        } else {
-            return false;
-        }
+        } 
         if (distance < IDEAL_DISTANCE) {
             adjustDistance(reverse);
         }
         uSensorMotor.rotate(-sensorToRotate);
         pilot.travel(MOVE_BACK_DISTANCE);
-        return true;
+        return distance < OCCUPIED_THRESHOLD;
     }
     
     // is the grid we are looking at occupied?
     private boolean isTheGridOccupied() {
-        double distance = getAccurateDistance();
-        if (distance < OCCUPIED_THRESHOLD) {
+        if (getAccurateDistance() < OCCUPIED_THRESHOLD) {
             return true;
         } else {
             return false;
@@ -349,11 +348,10 @@ public class Megatron {
     
     // adjust the angle between the wall
     private void adjustAngle(boolean reverse) {
-        System.out.println("Ad angle");
         pilot.travel(-MOVE_DISTANCE_TO_ADJUST_ANGLE);
-        double firstDist = getAccurateDistance();
+        double firstDist = getAccurateDistance(); // 15.48
         pilot.travel(MOVE_DISTANCE_TO_ADJUST_ANGLE);
-        double secondDist = getAccurateDistance();
+        double secondDist = getAccurateDistance(); // 9.5
         double tantheta = (secondDist - firstDist) / MOVE_DISTANCE_TO_ADJUST_ANGLE;
         if (Math.abs(secondDist - firstDist) > 10) {
             return;
@@ -361,6 +359,7 @@ public class Megatron {
         double theta = Math.atan(tantheta) * 180 / Math.PI;
         System.out.println("theta: " + theta);
         if (Math.abs(theta) > ADJUST_ANGLE_THRESHOLD) {
+            Button.waitForAnyEvent();
             theta = 0;
         }
         theta *= reverse ? -1 : 1;
@@ -434,7 +433,9 @@ public class Megatron {
                 String command = input.readLine();
                 System.out.println("Command: " + command);
                 if (command.equals("get(color)")) {
+                    pilot.travel(-MOVE_BACK_DISTANCE);
                     String theColor = getColorName();
+                    pilot.travel(MOVE_BACK_DISTANCE);
                     if (theColor.equals(BLUE) || theColor.equals(RED) || theColor.equals(GREEN))
                         Sound.beep();
                     output.println(theColor);
@@ -480,21 +481,21 @@ public class Megatron {
         char[] results = new char[4];
         String str = "";
         // get front first
-        boolean front = getAccurateDistance() < OCCUPIED_THRESHOLD;
+        boolean front = isTheGridOccupied();
         results[0] = front ? '1' : '0';
         // sensor rotate right 90 get right
         uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
-        boolean right = getAccurateDistance() < OCCUPIED_THRESHOLD;
+        boolean right = isTheGridOccupied();
         results[3] = right ? '1' : '0';
         // sensor rotate left 180
         uSensorMotor.rotate(2*SENSOR_MOTOR_ROTATE_ANGLE);
-        boolean left = getAccurateDistance() < OCCUPIED_THRESHOLD;
+        boolean left = isTheGridOccupied();
         results[2] = left ? '1' : '0';
         if (firstStepFinished == true) {
             results[1] = '0';
         } else {
             pilot.rotate(-90);
-            results[1] = getAccurateDistance() < OCCUPIED_THRESHOLD ? '1' : '0';
+            results[1] = isTheGridOccupied() ? '1' : '0';
             pilot.rotate(90);
         }
         uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
