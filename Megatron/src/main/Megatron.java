@@ -44,12 +44,12 @@ public class Megatron {
     private static final double ANGULAR_SPEED = 50;
     private static final double ANGULAR_ACCELERATION = 200;
     private static final double LINEAR_SPEED = 10;
-    private static final double LINEAR_ACCELERATION = 60;
+    private static final double LINEAR_ACCELERATION = 80;
     private static final double DIAMETER = 4.4;
     private static final double OFFSET = 5.55;
-    private static final int SENSOR_MOTOR_ROTATE_ANGLE = 95;
+    private static final int SENSOR_MOTOR_ROTATE_ANGLE = 91;
     // shorter one in this assignment
-    private static final double LEFT_RIGHT_DISTANCE =11;
+    private static final double LEFT_RIGHT_DISTANCE = 11;
     // longer one in this assignment
     private static final double UP_DOWN_DISTANCE = 12;
     private static final double FIXED_LENGTH_DISTANCE = 12;
@@ -127,13 +127,10 @@ public class Megatron {
         } else if (r > RED_THRESHOLD && g > BLUE_THRESHOLD && b > BLUE_THRESHOLD) {
             return WHITE;
         } else if (r > RED_THRESHOLD) {
-            Sound.beep();
             return RED;
         } else if (b > BLUE_THRESHOLD) {
-            Sound.beep();
             return BLUE;
         } else if (g > GREEN_THRESHOLD) {
-            Sound.beep();
             return GREEN;
         }
         return WRONG;
@@ -231,7 +228,10 @@ public class Megatron {
     // for example, if the relative direction is front, then just go forward
     private String moveRelatively(String relativeDirection, String heading) {
         System.out.println("move: " + relativeDirection);
-        doCalibration(relativeDirection);
+        boolean didOrNot = doCalibration(relativeDirection);
+        if (relativeDirection.equals(RELATIVE_BACK)) {
+            doCalibration(RELATIVE_LEFT);
+        }
         boolean canFixRotationError = false;
         switch (relativeDirection) {
         case RELATIVE_FRONT:
@@ -243,19 +243,13 @@ public class Megatron {
             pilot.rotate(180);
             break;
         case RELATIVE_LEFT:
-            uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
-            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
-                canFixRotationError = true;
-            }
-            uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
+            // if calibration was done, then there must be an obstacle behind after rotation,
+            // which means we can't fix rotation error then
+            canFixRotationError = didOrNot ? false : true;
             pilot.rotate(-90);
             break;
         case RELATIVE_RIGHT:
-            uSensorMotor.rotate(SENSOR_MOTOR_ROTATE_ANGLE);
-            if (getAccurateDistance() > OCCUPIED_THRESHOLD) {
-                canFixRotationError = true;
-            }
-            uSensorMotor.rotate(-SENSOR_MOTOR_ROTATE_ANGLE);
+            canFixRotationError = didOrNot ? false : true;
             pilot.rotate(90);
             break;
         }
@@ -312,12 +306,12 @@ public class Megatron {
     
     /* calibration related methods */
 
-    // do calibration
-    private void doCalibration(String direction) {
+    // do calibration -> return (did calibration or not)
+    private boolean doCalibration(String direction) {
         int sensorToRotate = 0;
         boolean reverse = false;
         if (!firstStepFinished || direction.equals(RELATIVE_FRONT)) {
-            return;
+            return false;
         } else if (direction.equals(RELATIVE_BACK) || direction.equals(RELATIVE_RIGHT)) {
             // according to the left obstacle
             sensorToRotate = SENSOR_MOTOR_ROTATE_ANGLE;
@@ -332,14 +326,27 @@ public class Megatron {
         double distance = getAccurateDistance();
         if (distance < OCCUPIED_THRESHOLD) {
             adjustAngle(reverse);
+        } else {
+            return false;
         }
         if (distance < IDEAL_DISTANCE) {
             adjustDistance(reverse);
         }
         uSensorMotor.rotate(-sensorToRotate);
         pilot.travel(MOVE_BACK_DISTANCE);
+        return true;
     }
-
+    
+    // is the grid we are looking at occupied?
+    private boolean isTheGridOccupied() {
+        double distance = getAccurateDistance();
+        if (distance < OCCUPIED_THRESHOLD) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     // adjust the angle between the wall
     private void adjustAngle(boolean reverse) {
         System.out.println("Ad angle");
@@ -427,7 +434,10 @@ public class Megatron {
                 String command = input.readLine();
                 System.out.println("Command: " + command);
                 if (command.equals("get(color)")) {
-                    output.println(getColorName());
+                    String theColor = getColorName();
+                    if (theColor.equals(BLUE) || theColor.equals(RED) || theColor.equals(GREEN))
+                        Sound.beep();
+                    output.println(theColor);
                 } else if (command.equals("get(occupied)")) {
                     output.println(getOccupiedInfo());
                 } else if (command.startsWith("move")) {
