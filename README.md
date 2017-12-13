@@ -17,3 +17,5 @@ Bascially, this project aims to code a LEGO Ev3 robot to rescue victims at diffe
 ## Structure of project
 * Robot side - Megatron
 * Jason and Java side - src/*
+
+## The demonstration was successfully done on 13 December 2017. Well done everyone.
