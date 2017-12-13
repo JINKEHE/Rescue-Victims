@@ -37,7 +37,7 @@ public class Megatron {
     private static final double ADJUST_ANGLE_THRESHOLD = 55;
     private static final double MINIMAL_ANGLE_TO_ADJUST = 5;
     private static final double MOVE_DISTANCE_TO_ADJUST_DISTANCE = 13;
-    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 5;
+    private static final double MOVE_DISTANCE_TO_ADJUST_ANGLE = 4.5;
     private static final double MOVE_BACK_DISTANCE = 2;
     private boolean firstStepFinished = false;
     // for pilot setting (optimized through experiments)
@@ -45,7 +45,7 @@ public class Megatron {
     private static final double ANGULAR_SPEED = 50;
     private static final double ANGULAR_ACCELERATION = 200;
     private static final double LINEAR_SPEED = 10;
-    private static final double LINEAR_ACCELERATION = 80;
+    private static final double LINEAR_ACCELERATION = 40;
     private static final double DIAMETER = 4.4;
     private static final double OFFSET = 5.55;
     private static final int SENSOR_MOTOR_ROTATE_ANGLE = 95;                                                                             ;
@@ -353,7 +353,7 @@ public class Megatron {
         pilot.travel(MOVE_DISTANCE_TO_ADJUST_ANGLE);
         double secondDist = getAccurateDistance(); // 9.5
         double tantheta = (secondDist - firstDist) / MOVE_DISTANCE_TO_ADJUST_ANGLE;
-        if (Math.abs(secondDist - firstDist) > 10) {
+        if (Math.abs(secondDist - firstDist) > 10 || firstDist > OCCUPIED_THRESHOLD || secondDist > OCCUPIED_THRESHOLD) {
             return;
         }
         double theta = Math.atan(tantheta) * 180 / Math.PI;
@@ -446,9 +446,7 @@ public class Megatron {
                     output.println(moveRelatively(parameters[0],parameters[1]));
                     firstStepFinished = true;
                 } else if (command.equals("end")) {
-                    Sound.beepSequence();
-                    Sound.beepSequenceUp();
-                    Sound.beep();
+                    doCelebration();
                     output.println(DONE);
                 }
                 output.flush();
@@ -457,6 +455,12 @@ public class Megatron {
         }
     }
 
+    private void doCelebration() {
+        Sound.beepSequence();
+        Sound.beepSequenceUp();
+        Sound.beep();
+    }
+    
     // extract parameters from a command
     // for example, say(hello,world,nihao) -> ["hello","world","nihao"]
     private String[] getParameters(String command) {
